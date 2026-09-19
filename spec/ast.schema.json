@@ -1,0 +1,265 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gitlab.com/tcc-nshiftui/global/rainbowparser-rust/-/raw/main/spec/ast.schema.json",
+  "title": "Rainbow AST",
+  "type": "object",
+  "required": ["uses", "nodes"],
+  "additionalProperties": false,
+  "properties": {
+    "uses": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/useDeclaration" }
+    },
+    "nodes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/node" }
+    }
+  },
+  "$defs": {
+    "sourceLocation": {
+      "type": "object",
+      "required": ["offset", "line", "column"],
+      "additionalProperties": false,
+      "properties": {
+        "offset": { "type": "integer", "minimum": 0 },
+        "line": { "type": "integer", "minimum": 1 },
+        "column": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "sourceRange": {
+      "type": "object",
+      "required": ["start", "end"],
+      "additionalProperties": false,
+      "properties": {
+        "start": { "$ref": "#/$defs/sourceLocation" },
+        "end": { "$ref": "#/$defs/sourceLocation" }
+      }
+    },
+    "name": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["kind", "value"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "ident" },
+            "value": { "type": "string" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "value"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "placeholder" },
+            "value": { "type": "string" }
+          }
+        }
+      ]
+    },
+    "leadingTrivia": {
+      "type": "object",
+      "required": ["comments"],
+      "additionalProperties": false,
+      "properties": {
+        "comments": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "useDeclaration": {
+      "type": "object",
+      "required": ["name", "version", "leading"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "$ref": "#/$defs/name" },
+        "version": {
+          "anyOf": [
+            { "type": "null" },
+            { "type": "string" }
+          ]
+        },
+        "leading": { "$ref": "#/$defs/leadingTrivia" }
+      }
+    },
+    "node": {
+      "type": "object",
+      "required": ["name", "parameters", "block", "leading"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "$ref": "#/$defs/name" },
+        "parameters": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/parameter" }
+        },
+        "block": {
+          "anyOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/block" }
+          ]
+        },
+        "leading": { "$ref": "#/$defs/leadingTrivia" }
+      }
+    },
+    "block": {
+      "type": "object",
+      "required": ["children"],
+      "additionalProperties": false,
+      "properties": {
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/node" }
+        }
+      }
+    },
+    "parameter": {
+      "type": "object",
+      "required": ["name", "value", "leading"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "value": { "$ref": "#/$defs/value" },
+        "leading": { "$ref": "#/$defs/leadingTrivia" }
+      }
+    },
+    "objectEntry": {
+      "type": "object",
+      "required": ["key", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "key": { "type": "string" },
+        "value": { "$ref": "#/$defs/value" }
+      }
+    },
+    "value": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["kind", "value"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "string" },
+            "value": { "type": "string" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "value"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "int" },
+            "value": { "type": "integer" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "value"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "double" },
+            "value": { "type": "number" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "value"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "bool" },
+            "value": { "type": "boolean" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "value"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "identifier" },
+            "value": {
+              "type": "string",
+              "description": "Enum identifier name without the leading '.' required in source (e.g. source `.primary` → value `primary`)."
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "value"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "placeholder" },
+            "value": { "type": "string" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "language", "body", "bodyRange"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "tagged" },
+            "language": {
+              "type": "string",
+              "enum": ["JSON", "YAML", "XML", "HTML", "MARKDOWN"]
+            },
+            "body": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "required": ["kind", "value"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "kind": { "const": "text" },
+                    "value": { "type": "string" }
+                  }
+                },
+                {
+                  "type": "object",
+                  "required": ["kind", "value"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "kind": { "const": "placeholder" },
+                    "value": { "type": "string" }
+                  }
+                }
+              ]
+            },
+            "bodyRange": { "$ref": "#/$defs/sourceRange" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "values"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "array" },
+            "values": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/value" }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "entries"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "object" },
+            "entries": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/objectEntry" }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "null" }
+          }
+        }
+      ]
+    }
+  }
+}
+

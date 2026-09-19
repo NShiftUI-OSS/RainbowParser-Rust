@@ -1,0 +1,127 @@
+{
+  "scopeName": "rainbow.embedded.injection",
+  "injectionSelector": "L:source.rainbow",
+  "patterns": [
+    { "include": "#tagged-json" },
+    { "include": "#tagged-yaml" },
+    { "include": "#tagged-xml" },
+    { "include": "#tagged-html" },
+    { "include": "#tagged-markdown" }
+  ],
+  "repository": {
+    "tagged-json": {
+      "begin": "(@)(JSON)(\\()",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.embedded.begin.rainbow" },
+        "2": { "name": "entity.name.type.embedded.json.rainbow" },
+        "3": { "name": "punctuation.definition.embedded.paren.begin.rainbow" }
+      },
+      "end": "\\)",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.embedded.paren.end.rainbow" }
+      },
+      "contentName": "meta.embedded.block.json.rainbow",
+      "patterns": [
+        { "include": "#placeholder" },
+        { "include": "source.json" },
+        {
+          "begin": "\\(",
+          "end": "\\)",
+          "patterns": [{ "include": "source.json" }]
+        }
+      ]
+    },
+    "tagged-yaml": {
+      "begin": "(@)(YAML)(\\()",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.embedded.begin.rainbow" },
+        "2": { "name": "entity.name.type.embedded.yaml.rainbow" },
+        "3": { "name": "punctuation.definition.embedded.paren.begin.rainbow" }
+      },
+      "end": "\\)",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.embedded.paren.end.rainbow" }
+      },
+      "contentName": "meta.embedded.block.yaml.rainbow",
+      "patterns": [
+        { "include": "#placeholder" },
+        { "include": "source.yaml" },
+        {
+          "begin": "\\(",
+          "end": "\\)",
+          "patterns": [{ "include": "source.yaml" }]
+        }
+      ]
+    },
+    "tagged-xml": {
+      "begin": "(@)(XML)(\\()",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.embedded.begin.rainbow" },
+        "2": { "name": "entity.name.type.embedded.xml.rainbow" },
+        "3": { "name": "punctuation.definition.embedded.paren.begin.rainbow" }
+      },
+      "end": "\\)",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.embedded.paren.end.rainbow" }
+      },
+      "contentName": "meta.embedded.block.xml.rainbow",
+      "patterns": [
+        { "include": "#placeholder" },
+        { "include": "text.xml" },
+        {
+          "begin": "\\(",
+          "end": "\\)",
+          "patterns": [{ "include": "text.xml" }]
+        }
+      ]
+    },
+    "tagged-html": {
+      "begin": "(@)(HTML)(\\()",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.embedded.begin.rainbow" },
+        "2": { "name": "entity.name.type.embedded.html.rainbow" },
+        "3": { "name": "punctuation.definition.embedded.paren.begin.rainbow" }
+      },
+      "end": "\\)",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.embedded.paren.end.rainbow" }
+      },
+      "contentName": "meta.embedded.block.html.rainbow",
+      "patterns": [
+        { "include": "#placeholder" },
+        { "include": "text.html.basic" },
+        {
+          "begin": "\\(",
+          "end": "\\)",
+          "patterns": [{ "include": "text.html.basic" }]
+        }
+      ]
+    },
+    "tagged-markdown": {
+      "begin": "(@)(MARKDOWN)(\\()",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.embedded.begin.rainbow" },
+        "2": { "name": "entity.name.type.embedded.markdown.rainbow" },
+        "3": { "name": "punctuation.definition.embedded.paren.begin.rainbow" }
+      },
+      "end": "\\)",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.embedded.paren.end.rainbow" }
+      },
+      "contentName": "meta.embedded.block.markdown.rainbow",
+      "patterns": [
+        { "include": "#placeholder" },
+        { "include": "text.html.markdown" },
+        {
+          "begin": "\\(",
+          "end": "\\)",
+          "patterns": [{ "include": "text.html.markdown" }]
+        }
+      ]
+    },
+    "placeholder": {
+      "match": "#\\{[A-Za-z_][A-Za-z0-9_]*\\}",
+      "name": "variable.other.placeholder.rainbow"
+    }
+  }
+}

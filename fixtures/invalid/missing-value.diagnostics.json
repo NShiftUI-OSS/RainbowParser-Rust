@@ -1,0 +1,20 @@
+[
+  {
+    "code": "rainbow.parser.unexpectedToken",
+    "message": "Expected value.",
+    "severity": "error",
+    "range": {
+      "start": {
+        "offset": 14,
+        "line": 1,
+        "column": 15
+      },
+      "end": {
+        "offset": 15,
+        "line": 1,
+        "column": 16
+      }
+    }
+  }
+]
+

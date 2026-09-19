@@ -1,0 +1,209 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Rainbow",
+  "scopeName": "source.rainbow",
+  "patterns": [
+    { "include": "#comment" },
+    { "include": "#use-template" },
+    { "include": "#use" },
+    { "include": "#placeholder" },
+    { "include": "#string" },
+    { "include": "#event-call" },
+    { "include": "#event-name" },
+    { "include": "#trigger-call" },
+    { "include": "#plugin-call" },
+    { "include": "#plugin-name" },
+    { "include": "#parameter" },
+    { "include": "#bool" },
+    { "include": "#null" },
+    { "include": "#version" },
+    { "include": "#number" },
+    { "include": "#identifier-value" },
+    { "include": "#punctuation" }
+  ],
+  "repository": {
+    "comment": {
+      "match": "//.*$",
+      "name": "comment.line.double-slash.rainbow"
+    },
+    "use-template": {
+      "match": "\\b(use)\\s+(#\\{[A-Za-z_][A-Za-z0-9_]*\\})",
+      "captures": {
+        "1": { "name": "keyword.control.use.rainbow" },
+        "2": { "name": "variable.other.placeholder.rainbow" }
+      }
+    },
+    "use": {
+      "match": "\\b(use)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*(@)\\s*([0-9]+(?:\\.[0-9]+){2,})",
+      "captures": {
+        "1": { "name": "keyword.control.use.rainbow" },
+        "2": { "name": "entity.name.type.pin.rainbow" },
+        "3": { "name": "punctuation.separator.at.rainbow" },
+        "4": { "name": "constant.numeric.version.rainbow" }
+      }
+    },
+    "placeholder": {
+      "match": "#\\{[A-Za-z_][A-Za-z0-9_]*\\}",
+      "name": "variable.other.placeholder.rainbow"
+    },
+    "string": {
+      "name": "string.quoted.double.rainbow",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.rainbow",
+          "match": "\\\\[\\\\\"nrt0]"
+        }
+      ]
+    },
+    "bool": {
+      "match": "\\b(true|false)\\b",
+      "name": "constant.language.boolean.rainbow"
+    },
+    "null": {
+      "match": "\\bnull\\b",
+      "name": "constant.language.null.rainbow"
+    },
+    "version": {
+      "match": "\\b[0-9]+(?:\\.[0-9]+){2,}\\b",
+      "name": "constant.numeric.version.rainbow"
+    },
+    "number": {
+      "match": "-?\\b[0-9]+(?:\\.[0-9]+)?\\b",
+      "name": "constant.numeric.rainbow"
+    },
+    "parameter": {
+      "match": "\\b([A-Za-z_][A-Za-z0-9_]*)\\s*(:)",
+      "captures": {
+        "1": { "name": "variable.parameter.rainbow" },
+        "2": { "name": "punctuation.separator.key-value.rainbow" }
+      }
+    },
+    "parameter-plugin": {
+      "match": "\\b([A-Za-z_][A-Za-z0-9_]*)\\s*(:)",
+      "captures": {
+        "1": { "name": "variable.parameter.plugin.rainbow" },
+        "2": { "name": "punctuation.separator.key-value.rainbow" }
+      }
+    },
+    "parameter-event": {
+      "match": "\\b([A-Za-z_][A-Za-z0-9_]*)\\s*(:)",
+      "captures": {
+        "1": { "name": "variable.parameter.event.rainbow" },
+        "2": { "name": "punctuation.separator.key-value.rainbow" }
+      }
+    },
+    "parameter-trigger": {
+      "match": "\\b([A-Za-z_][A-Za-z0-9_]*)\\s*(:)",
+      "captures": {
+        "1": { "name": "variable.parameter.trigger.rainbow" },
+        "2": { "name": "punctuation.separator.key-value.rainbow" }
+      }
+    },
+    "identifier-value": {
+      "match": "\\.([A-Za-z_][A-Za-z0-9_]*)",
+      "name": "variable.other.constant.rainbow"
+    },
+    "value-patterns": {
+      "patterns": [
+        { "include": "#string" },
+        { "include": "#bool" },
+        { "include": "#null" },
+        { "include": "#number" },
+        { "include": "#array" },
+        { "include": "#object" },
+        { "include": "#identifier-value" }
+      ]
+    },
+    "array": {
+      "begin": "\\[",
+      "beginCaptures": {
+        "0": { "name": "punctuation.section.brackets.begin.rainbow" }
+      },
+      "end": "\\]",
+      "endCaptures": {
+        "0": { "name": "punctuation.section.brackets.end.rainbow" }
+      },
+      "patterns": [
+        { "include": "#value-patterns" },
+        { "include": "#punctuation" }
+      ]
+    },
+    "object": {
+      "begin": "\\(",
+      "beginCaptures": {
+        "0": { "name": "punctuation.section.parens.begin.rainbow" }
+      },
+      "end": "\\)",
+      "endCaptures": {
+        "0": { "name": "punctuation.section.parens.end.rainbow" }
+      },
+      "patterns": [
+        { "include": "#parameter" },
+        { "include": "#value-patterns" },
+        { "include": "#punctuation" }
+      ]
+    },
+    "event-call": {
+      "begin": "\\b(On[A-Z][A-Za-z0-9]*)\\b\\s*(\\()",
+      "beginCaptures": {
+        "1": { "name": "entity.name.function.event.rainbow" },
+        "2": { "name": "punctuation.section.parens.begin.rainbow" }
+      },
+      "end": "\\)",
+      "endCaptures": {
+        "0": { "name": "punctuation.section.parens.end.rainbow" }
+      },
+      "patterns": [
+        { "include": "#parameter-event" },
+        { "include": "#value-patterns" },
+        { "include": "#punctuation" }
+      ]
+    },
+    "event-name": {
+      "match": "\\b(On[A-Z][A-Za-z0-9]*)\\b",
+      "name": "entity.name.function.event.rainbow"
+    },
+    "trigger-call": {
+      "begin": "\\b(Navigate|SendHTTPRequest|Log|OpenURL|Present|Dismiss|SetValue|Copy|Share)\\b\\s*(\\()",
+      "beginCaptures": {
+        "1": { "name": "entity.name.function.trigger.rainbow" },
+        "2": { "name": "punctuation.section.parens.begin.rainbow" }
+      },
+      "end": "\\)",
+      "endCaptures": {
+        "0": { "name": "punctuation.section.parens.end.rainbow" }
+      },
+      "patterns": [
+        { "include": "#parameter-trigger" },
+        { "include": "#value-patterns" },
+        { "include": "#punctuation" }
+      ]
+    },
+    "plugin-call": {
+      "begin": "\\b((?!On)[A-Z][A-Za-z0-9]*)\\b\\s*(\\()",
+      "beginCaptures": {
+        "1": { "name": "entity.name.type.plugin.rainbow" },
+        "2": { "name": "punctuation.section.parens.begin.rainbow" }
+      },
+      "end": "\\)",
+      "endCaptures": {
+        "0": { "name": "punctuation.section.parens.end.rainbow" }
+      },
+      "patterns": [
+        { "include": "#parameter-plugin" },
+        { "include": "#value-patterns" },
+        { "include": "#punctuation" }
+      ]
+    },
+    "plugin-name": {
+      "match": "\\b((?!On)[A-Z][A-Za-z0-9]*)\\b",
+      "name": "entity.name.type.plugin.rainbow"
+    },
+    "punctuation": {
+      "match": "[{}()\\[\\],:@]",
+      "name": "punctuation.rainbow"
+    }
+  }
+}

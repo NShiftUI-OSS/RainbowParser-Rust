@@ -1,0 +1,1034 @@
+{
+  "name": "vscode-rainbow",
+  "displayName": "Rainbow DSL",
+  "description": "Language support for the Rainbow SDUI DSL (VS Code + Cursor).",
+  "version": "0.1.0-beta.1",
+  "publisher": "tcc-nshiftui",
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.com/tcc-nshiftui/global/rainbowparser-rust.git"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Formatters",
+    "Linters"
+  ],
+  "keywords": [
+    "rainbow",
+    "sdui",
+    "nshiftui",
+    "dsl"
+  ],
+  "activationEvents": [
+    "onLanguage:rainbow"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "rainbow",
+        "aliases": [
+          "Rainbow",
+          "rainbow"
+        ],
+        "extensions": [
+          ".rbw"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/rainbow.png",
+          "dark": "./icons/rainbow.png"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "rainbow",
+        "scopeName": "source.rainbow",
+        "path": "./syntaxes/rainbow.tmLanguage.json"
+      },
+      {
+        "scopeName": "rainbow.embedded.injection",
+        "path": "./syntaxes/rainbow.embedded.tmLanguage.json",
+        "injectTo": [
+          "source.rainbow"
+        ],
+        "embeddedLanguages": {
+          "meta.embedded.block.json.rainbow": "json",
+          "meta.embedded.block.yaml.rainbow": "yaml",
+          "meta.embedded.block.xml.rainbow": "xml",
+          "meta.embedded.block.html.rainbow": "html",
+          "meta.embedded.block.markdown.rainbow": "markdown"
+        }
+      }
+    ],
+    "configuration": {
+      "title": "Rainbow",
+      "properties": {
+        "rainbow.lsp.path": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute path to the rainbow-lsp binary. Empty = search PATH, then ../target/debug|release/rainbow-lsp relative to this extension."
+        },
+        "rainbow.lsp.trace": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Traces communication between VS Code and rainbow-lsp."
+        },
+        "rainbow.registryPath": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute path to a Rainbow name registry JSON file ({ \"plugins\": [...], \"events\": [...] }). Used to diagnose plugin/event name conflicts and suggest completions."
+        },
+        "rainbow.embedded.bundledLanguageServices": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use bundled JSON/YAML/HTML/Markdown/XML language services for @LANG(...) parameter bodies (diagnostics, hover, completions). When enabled, rainbow-lsp embedded validators are suppressed in the editor (CLI validate still uses Rust)."
+        }
+      }
+    },
+    "configurationDefaults": {
+      "editor.tokenColorCustomizations": {
+        "textMateRules": [
+          {
+            "name": "Rainbow: use keyword",
+            "scope": [
+              "keyword.control.use.rainbow"
+            ],
+            "settings": {
+              "foreground": "#C4B5FD"
+            }
+          },
+          {
+            "name": "Rainbow: pin / plugin name",
+            "scope": [
+              "entity.name.type.pin.rainbow",
+              "entity.name.type.plugin.rainbow"
+            ],
+            "settings": {
+              "foreground": "#D0A8FF"
+            }
+          },
+          {
+            "name": "Rainbow: punctuation",
+            "scope": [
+              "punctuation.separator.at.rainbow",
+              "punctuation.rainbow",
+              "punctuation.section.parens.begin.rainbow",
+              "punctuation.section.parens.end.rainbow",
+              "punctuation.section.brackets.begin.rainbow",
+              "punctuation.section.brackets.end.rainbow",
+              "punctuation.section.braces.begin.rainbow",
+              "punctuation.section.braces.end.rainbow",
+              "punctuation.separator.key-value.rainbow"
+            ],
+            "settings": {
+              "foreground": "#9CA3AF"
+            }
+          },
+          {
+            "name": "Rainbow: SemVer",
+            "scope": [
+              "constant.numeric.version.rainbow"
+            ],
+            "settings": {
+              "foreground": "#F472B6"
+            }
+          },
+          {
+            "name": "Rainbow: event",
+            "scope": [
+              "entity.name.function.event.rainbow"
+            ],
+            "settings": {
+              "foreground": "#F1B467"
+            }
+          },
+          {
+            "name": "Rainbow: trigger",
+            "scope": [
+              "entity.name.function.trigger.rainbow"
+            ],
+            "settings": {
+              "foreground": "#FC6B83"
+            }
+          },
+          {
+            "name": "Rainbow: param (default / plugin)",
+            "scope": [
+              "variable.parameter.rainbow",
+              "variable.parameter.plugin.rainbow"
+            ],
+            "settings": {
+              "foreground": "#D0A8FF"
+            }
+          },
+          {
+            "name": "Rainbow: param (event)",
+            "scope": [
+              "variable.parameter.event.rainbow"
+            ],
+            "settings": {
+              "foreground": "#F1B467"
+            }
+          },
+          {
+            "name": "Rainbow: param (trigger)",
+            "scope": [
+              "variable.parameter.trigger.rainbow"
+            ],
+            "settings": {
+              "foreground": "#FC6B83"
+            }
+          },
+          {
+            "name": "Rainbow: string",
+            "scope": [
+              "string.quoted.double.rainbow"
+            ],
+            "settings": {
+              "foreground": "#FF9A3C"
+            }
+          },
+          {
+            "name": "Rainbow: string escape",
+            "scope": [
+              "constant.character.escape.rainbow"
+            ],
+            "settings": {
+              "foreground": "#FFB86C"
+            }
+          },
+          {
+            "name": "Rainbow: number",
+            "scope": [
+              "constant.numeric.rainbow"
+            ],
+            "settings": {
+              "foreground": "#B5CEA8"
+            }
+          },
+          {
+            "name": "Rainbow: bool",
+            "scope": [
+              "constant.language.boolean.rainbow"
+            ],
+            "settings": {
+              "foreground": "#E879F9"
+            }
+          },
+          {
+            "name": "Rainbow: null",
+            "scope": [
+              "constant.language.null.rainbow"
+            ],
+            "settings": {
+              "foreground": "#FB7185"
+            }
+          },
+          {
+            "name": "Rainbow: identifier value",
+            "scope": [
+              "variable.other.constant.rainbow"
+            ],
+            "settings": {
+              "foreground": "#22D3EE"
+            }
+          }
+        ]
+      },
+      "[Default Light Modern]": {
+        "editor.tokenColorCustomizations": {
+          "textMateRules": [
+            {
+              "name": "Rainbow: use keyword",
+              "scope": [
+                "keyword.control.use.rainbow"
+              ],
+              "settings": {
+                "foreground": "#7C3AED"
+              }
+            },
+            {
+              "name": "Rainbow: pin / plugin name",
+              "scope": [
+                "entity.name.type.pin.rainbow",
+                "entity.name.type.plugin.rainbow"
+              ],
+              "settings": {
+                "foreground": "#8040D0"
+              }
+            },
+            {
+              "name": "Rainbow: punctuation",
+              "scope": [
+                "punctuation.separator.at.rainbow",
+                "punctuation.rainbow",
+                "punctuation.section.parens.begin.rainbow",
+                "punctuation.section.parens.end.rainbow",
+                "punctuation.section.brackets.begin.rainbow",
+                "punctuation.section.brackets.end.rainbow",
+                "punctuation.section.braces.begin.rainbow",
+                "punctuation.section.braces.end.rainbow",
+                "punctuation.separator.key-value.rainbow"
+              ],
+              "settings": {
+                "foreground": "#6B7280"
+              }
+            },
+            {
+              "name": "Rainbow: SemVer",
+              "scope": [
+                "constant.numeric.version.rainbow"
+              ],
+              "settings": {
+                "foreground": "#DB2777"
+              }
+            },
+            {
+              "name": "Rainbow: event",
+              "scope": [
+                "entity.name.function.event.rainbow"
+              ],
+              "settings": {
+                "foreground": "#C08532"
+              }
+            },
+            {
+              "name": "Rainbow: trigger",
+              "scope": [
+                "entity.name.function.trigger.rainbow"
+              ],
+              "settings": {
+                "foreground": "#CF2D56"
+              }
+            },
+            {
+              "name": "Rainbow: param (default / plugin)",
+              "scope": [
+                "variable.parameter.rainbow",
+                "variable.parameter.plugin.rainbow"
+              ],
+              "settings": {
+                "foreground": "#8040D0"
+              }
+            },
+            {
+              "name": "Rainbow: param (event)",
+              "scope": [
+                "variable.parameter.event.rainbow"
+              ],
+              "settings": {
+                "foreground": "#C08532"
+              }
+            },
+            {
+              "name": "Rainbow: param (trigger)",
+              "scope": [
+                "variable.parameter.trigger.rainbow"
+              ],
+              "settings": {
+                "foreground": "#CF2D56"
+              }
+            },
+            {
+              "name": "Rainbow: string",
+              "scope": [
+                "string.quoted.double.rainbow"
+              ],
+              "settings": {
+                "foreground": "#E86A17"
+              }
+            },
+            {
+              "name": "Rainbow: string escape",
+              "scope": [
+                "constant.character.escape.rainbow"
+              ],
+              "settings": {
+                "foreground": "#C2410C"
+              }
+            },
+            {
+              "name": "Rainbow: number",
+              "scope": [
+                "constant.numeric.rainbow"
+              ],
+              "settings": {
+                "foreground": "#098658"
+              }
+            },
+            {
+              "name": "Rainbow: bool",
+              "scope": [
+                "constant.language.boolean.rainbow"
+              ],
+              "settings": {
+                "foreground": "#A21CAF"
+              }
+            },
+            {
+              "name": "Rainbow: null",
+              "scope": [
+                "constant.language.null.rainbow"
+              ],
+              "settings": {
+                "foreground": "#E11D48"
+              }
+            },
+            {
+              "name": "Rainbow: identifier value",
+              "scope": [
+                "variable.other.constant.rainbow"
+              ],
+              "settings": {
+                "foreground": "#0891B2"
+              }
+            }
+          ]
+        }
+      },
+      "[Default Light+]": {
+        "editor.tokenColorCustomizations": {
+          "textMateRules": [
+            {
+              "name": "Rainbow: use keyword",
+              "scope": [
+                "keyword.control.use.rainbow"
+              ],
+              "settings": {
+                "foreground": "#7C3AED"
+              }
+            },
+            {
+              "name": "Rainbow: pin / plugin name",
+              "scope": [
+                "entity.name.type.pin.rainbow",
+                "entity.name.type.plugin.rainbow"
+              ],
+              "settings": {
+                "foreground": "#8040D0"
+              }
+            },
+            {
+              "name": "Rainbow: punctuation",
+              "scope": [
+                "punctuation.separator.at.rainbow",
+                "punctuation.rainbow",
+                "punctuation.section.parens.begin.rainbow",
+                "punctuation.section.parens.end.rainbow",
+                "punctuation.section.brackets.begin.rainbow",
+                "punctuation.section.brackets.end.rainbow",
+                "punctuation.section.braces.begin.rainbow",
+                "punctuation.section.braces.end.rainbow",
+                "punctuation.separator.key-value.rainbow"
+              ],
+              "settings": {
+                "foreground": "#6B7280"
+              }
+            },
+            {
+              "name": "Rainbow: SemVer",
+              "scope": [
+                "constant.numeric.version.rainbow"
+              ],
+              "settings": {
+                "foreground": "#DB2777"
+              }
+            },
+            {
+              "name": "Rainbow: event",
+              "scope": [
+                "entity.name.function.event.rainbow"
+              ],
+              "settings": {
+                "foreground": "#C08532"
+              }
+            },
+            {
+              "name": "Rainbow: trigger",
+              "scope": [
+                "entity.name.function.trigger.rainbow"
+              ],
+              "settings": {
+                "foreground": "#CF2D56"
+              }
+            },
+            {
+              "name": "Rainbow: param (default / plugin)",
+              "scope": [
+                "variable.parameter.rainbow",
+                "variable.parameter.plugin.rainbow"
+              ],
+              "settings": {
+                "foreground": "#8040D0"
+              }
+            },
+            {
+              "name": "Rainbow: param (event)",
+              "scope": [
+                "variable.parameter.event.rainbow"
+              ],
+              "settings": {
+                "foreground": "#C08532"
+              }
+            },
+            {
+              "name": "Rainbow: param (trigger)",
+              "scope": [
+                "variable.parameter.trigger.rainbow"
+              ],
+              "settings": {
+                "foreground": "#CF2D56"
+              }
+            },
+            {
+              "name": "Rainbow: string",
+              "scope": [
+                "string.quoted.double.rainbow"
+              ],
+              "settings": {
+                "foreground": "#E86A17"
+              }
+            },
+            {
+              "name": "Rainbow: string escape",
+              "scope": [
+                "constant.character.escape.rainbow"
+              ],
+              "settings": {
+                "foreground": "#C2410C"
+              }
+            },
+            {
+              "name": "Rainbow: number",
+              "scope": [
+                "constant.numeric.rainbow"
+              ],
+              "settings": {
+                "foreground": "#098658"
+              }
+            },
+            {
+              "name": "Rainbow: bool",
+              "scope": [
+                "constant.language.boolean.rainbow"
+              ],
+              "settings": {
+                "foreground": "#A21CAF"
+              }
+            },
+            {
+              "name": "Rainbow: null",
+              "scope": [
+                "constant.language.null.rainbow"
+              ],
+              "settings": {
+                "foreground": "#E11D48"
+              }
+            },
+            {
+              "name": "Rainbow: identifier value",
+              "scope": [
+                "variable.other.constant.rainbow"
+              ],
+              "settings": {
+                "foreground": "#0891B2"
+              }
+            }
+          ]
+        }
+      },
+      "[Light+]": {
+        "editor.tokenColorCustomizations": {
+          "textMateRules": [
+            {
+              "name": "Rainbow: use keyword",
+              "scope": [
+                "keyword.control.use.rainbow"
+              ],
+              "settings": {
+                "foreground": "#7C3AED"
+              }
+            },
+            {
+              "name": "Rainbow: pin / plugin name",
+              "scope": [
+                "entity.name.type.pin.rainbow",
+                "entity.name.type.plugin.rainbow"
+              ],
+              "settings": {
+                "foreground": "#8040D0"
+              }
+            },
+            {
+              "name": "Rainbow: punctuation",
+              "scope": [
+                "punctuation.separator.at.rainbow",
+                "punctuation.rainbow",
+                "punctuation.section.parens.begin.rainbow",
+                "punctuation.section.parens.end.rainbow",
+                "punctuation.section.brackets.begin.rainbow",
+                "punctuation.section.brackets.end.rainbow",
+                "punctuation.section.braces.begin.rainbow",
+                "punctuation.section.braces.end.rainbow",
+                "punctuation.separator.key-value.rainbow"
+              ],
+              "settings": {
+                "foreground": "#6B7280"
+              }
+            },
+            {
+              "name": "Rainbow: SemVer",
+              "scope": [
+                "constant.numeric.version.rainbow"
+              ],
+              "settings": {
+                "foreground": "#DB2777"
+              }
+            },
+            {
+              "name": "Rainbow: event",
+              "scope": [
+                "entity.name.function.event.rainbow"
+              ],
+              "settings": {
+                "foreground": "#C08532"
+              }
+            },
+            {
+              "name": "Rainbow: trigger",
+              "scope": [
+                "entity.name.function.trigger.rainbow"
+              ],
+              "settings": {
+                "foreground": "#CF2D56"
+              }
+            },
+            {
+              "name": "Rainbow: param (default / plugin)",
+              "scope": [
+                "variable.parameter.rainbow",
+                "variable.parameter.plugin.rainbow"
+              ],
+              "settings": {
+                "foreground": "#8040D0"
+              }
+            },
+            {
+              "name": "Rainbow: param (event)",
+              "scope": [
+                "variable.parameter.event.rainbow"
+              ],
+              "settings": {
+                "foreground": "#C08532"
+              }
+            },
+            {
+              "name": "Rainbow: param (trigger)",
+              "scope": [
+                "variable.parameter.trigger.rainbow"
+              ],
+              "settings": {
+                "foreground": "#CF2D56"
+              }
+            },
+            {
+              "name": "Rainbow: string",
+              "scope": [
+                "string.quoted.double.rainbow"
+              ],
+              "settings": {
+                "foreground": "#E86A17"
+              }
+            },
+            {
+              "name": "Rainbow: string escape",
+              "scope": [
+                "constant.character.escape.rainbow"
+              ],
+              "settings": {
+                "foreground": "#C2410C"
+              }
+            },
+            {
+              "name": "Rainbow: number",
+              "scope": [
+                "constant.numeric.rainbow"
+              ],
+              "settings": {
+                "foreground": "#098658"
+              }
+            },
+            {
+              "name": "Rainbow: bool",
+              "scope": [
+                "constant.language.boolean.rainbow"
+              ],
+              "settings": {
+                "foreground": "#A21CAF"
+              }
+            },
+            {
+              "name": "Rainbow: null",
+              "scope": [
+                "constant.language.null.rainbow"
+              ],
+              "settings": {
+                "foreground": "#E11D48"
+              }
+            },
+            {
+              "name": "Rainbow: identifier value",
+              "scope": [
+                "variable.other.constant.rainbow"
+              ],
+              "settings": {
+                "foreground": "#0891B2"
+              }
+            }
+          ]
+        }
+      },
+      "[Quiet Light]": {
+        "editor.tokenColorCustomizations": {
+          "textMateRules": [
+            {
+              "name": "Rainbow: use keyword",
+              "scope": [
+                "keyword.control.use.rainbow"
+              ],
+              "settings": {
+                "foreground": "#7C3AED"
+              }
+            },
+            {
+              "name": "Rainbow: pin / plugin name",
+              "scope": [
+                "entity.name.type.pin.rainbow",
+                "entity.name.type.plugin.rainbow"
+              ],
+              "settings": {
+                "foreground": "#8040D0"
+              }
+            },
+            {
+              "name": "Rainbow: punctuation",
+              "scope": [
+                "punctuation.separator.at.rainbow",
+                "punctuation.rainbow",
+                "punctuation.section.parens.begin.rainbow",
+                "punctuation.section.parens.end.rainbow",
+                "punctuation.section.brackets.begin.rainbow",
+                "punctuation.section.brackets.end.rainbow",
+                "punctuation.section.braces.begin.rainbow",
+                "punctuation.section.braces.end.rainbow",
+                "punctuation.separator.key-value.rainbow"
+              ],
+              "settings": {
+                "foreground": "#6B7280"
+              }
+            },
+            {
+              "name": "Rainbow: SemVer",
+              "scope": [
+                "constant.numeric.version.rainbow"
+              ],
+              "settings": {
+                "foreground": "#DB2777"
+              }
+            },
+            {
+              "name": "Rainbow: event",
+              "scope": [
+                "entity.name.function.event.rainbow"
+              ],
+              "settings": {
+                "foreground": "#C08532"
+              }
+            },
+            {
+              "name": "Rainbow: trigger",
+              "scope": [
+                "entity.name.function.trigger.rainbow"
+              ],
+              "settings": {
+                "foreground": "#CF2D56"
+              }
+            },
+            {
+              "name": "Rainbow: param (default / plugin)",
+              "scope": [
+                "variable.parameter.rainbow",
+                "variable.parameter.plugin.rainbow"
+              ],
+              "settings": {
+                "foreground": "#8040D0"
+              }
+            },
+            {
+              "name": "Rainbow: param (event)",
+              "scope": [
+                "variable.parameter.event.rainbow"
+              ],
+              "settings": {
+                "foreground": "#C08532"
+              }
+            },
+            {
+              "name": "Rainbow: param (trigger)",
+              "scope": [
+                "variable.parameter.trigger.rainbow"
+              ],
+              "settings": {
+                "foreground": "#CF2D56"
+              }
+            },
+            {
+              "name": "Rainbow: string",
+              "scope": [
+                "string.quoted.double.rainbow"
+              ],
+              "settings": {
+                "foreground": "#E86A17"
+              }
+            },
+            {
+              "name": "Rainbow: string escape",
+              "scope": [
+                "constant.character.escape.rainbow"
+              ],
+              "settings": {
+                "foreground": "#C2410C"
+              }
+            },
+            {
+              "name": "Rainbow: number",
+              "scope": [
+                "constant.numeric.rainbow"
+              ],
+              "settings": {
+                "foreground": "#098658"
+              }
+            },
+            {
+              "name": "Rainbow: bool",
+              "scope": [
+                "constant.language.boolean.rainbow"
+              ],
+              "settings": {
+                "foreground": "#A21CAF"
+              }
+            },
+            {
+              "name": "Rainbow: null",
+              "scope": [
+                "constant.language.null.rainbow"
+              ],
+              "settings": {
+                "foreground": "#E11D48"
+              }
+            },
+            {
+              "name": "Rainbow: identifier value",
+              "scope": [
+                "variable.other.constant.rainbow"
+              ],
+              "settings": {
+                "foreground": "#0891B2"
+              }
+            }
+          ]
+        }
+      },
+      "[Cursor Light]": {
+        "editor.tokenColorCustomizations": {
+          "textMateRules": [
+            {
+              "name": "Rainbow: use keyword",
+              "scope": [
+                "keyword.control.use.rainbow"
+              ],
+              "settings": {
+                "foreground": "#7C3AED"
+              }
+            },
+            {
+              "name": "Rainbow: pin / plugin name",
+              "scope": [
+                "entity.name.type.pin.rainbow",
+                "entity.name.type.plugin.rainbow"
+              ],
+              "settings": {
+                "foreground": "#8040D0"
+              }
+            },
+            {
+              "name": "Rainbow: punctuation",
+              "scope": [
+                "punctuation.separator.at.rainbow",
+                "punctuation.rainbow",
+                "punctuation.section.parens.begin.rainbow",
+                "punctuation.section.parens.end.rainbow",
+                "punctuation.section.brackets.begin.rainbow",
+                "punctuation.section.brackets.end.rainbow",
+                "punctuation.section.braces.begin.rainbow",
+                "punctuation.section.braces.end.rainbow",
+                "punctuation.separator.key-value.rainbow"
+              ],
+              "settings": {
+                "foreground": "#6B7280"
+              }
+            },
+            {
+              "name": "Rainbow: SemVer",
+              "scope": [
+                "constant.numeric.version.rainbow"
+              ],
+              "settings": {
+                "foreground": "#DB2777"
+              }
+            },
+            {
+              "name": "Rainbow: event",
+              "scope": [
+                "entity.name.function.event.rainbow"
+              ],
+              "settings": {
+                "foreground": "#C08532"
+              }
+            },
+            {
+              "name": "Rainbow: trigger",
+              "scope": [
+                "entity.name.function.trigger.rainbow"
+              ],
+              "settings": {
+                "foreground": "#CF2D56"
+              }
+            },
+            {
+              "name": "Rainbow: param (default / plugin)",
+              "scope": [
+                "variable.parameter.rainbow",
+                "variable.parameter.plugin.rainbow"
+              ],
+              "settings": {
+                "foreground": "#8040D0"
+              }
+            },
+            {
+              "name": "Rainbow: param (event)",
+              "scope": [
+                "variable.parameter.event.rainbow"
+              ],
+              "settings": {
+                "foreground": "#C08532"
+              }
+            },
+            {
+              "name": "Rainbow: param (trigger)",
+              "scope": [
+                "variable.parameter.trigger.rainbow"
+              ],
+              "settings": {
+                "foreground": "#CF2D56"
+              }
+            },
+            {
+              "name": "Rainbow: string",
+              "scope": [
+                "string.quoted.double.rainbow"
+              ],
+              "settings": {
+                "foreground": "#E86A17"
+              }
+            },
+            {
+              "name": "Rainbow: string escape",
+              "scope": [
+                "constant.character.escape.rainbow"
+              ],
+              "settings": {
+                "foreground": "#C2410C"
+              }
+            },
+            {
+              "name": "Rainbow: number",
+              "scope": [
+                "constant.numeric.rainbow"
+              ],
+              "settings": {
+                "foreground": "#098658"
+              }
+            },
+            {
+              "name": "Rainbow: bool",
+              "scope": [
+                "constant.language.boolean.rainbow"
+              ],
+              "settings": {
+                "foreground": "#A21CAF"
+              }
+            },
+            {
+              "name": "Rainbow: null",
+              "scope": [
+                "constant.language.null.rainbow"
+              ],
+              "settings": {
+                "foreground": "#E11D48"
+              }
+            },
+            {
+              "name": "Rainbow: identifier value",
+              "scope": [
+                "variable.other.constant.rainbow"
+              ],
+              "settings": {
+                "foreground": "#0891B2"
+              }
+            }
+          ]
+        }
+      },
+      "[rainbow]": {
+        "editor.defaultFormatter": "tcc-nshiftui.vscode-rainbow",
+        "editor.formatOnSave": true
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test:offsets": "npm run compile && node scripts/test-offsets.mjs",
+    "package": "vsce package --skip-license",
+    "icons:install": "bash scripts/use-icons.sh --install"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^5.10.1",
+    "htmlhint": "^1.9.2",
+    "markdownlint": "^0.41.1",
+    "vscode-html-languageservice": "^5.6.2",
+    "vscode-json-languageservice": "^5.7.2",
+    "vscode-languageclient": "^9.0.1",
+    "vscode-languageserver-textdocument": "^1.0.12",
+    "vscode-languageserver-types": "^3.18.0",
+    "yaml-language-server": "^1.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.2.1",
+    "typescript": "^5.3.3"
+  }
+}

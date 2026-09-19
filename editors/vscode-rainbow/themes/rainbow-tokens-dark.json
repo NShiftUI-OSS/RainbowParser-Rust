@@ -1,0 +1,197 @@
+{
+  "textMateRules": [
+    {
+      "name": "Rainbow: use keyword",
+      "scope": [
+        "keyword.control.use.rainbow"
+      ],
+      "settings": {
+        "foreground": "#C4B5FD"
+      }
+    },
+    {
+      "name": "Rainbow: pin / plugin name",
+      "scope": [
+        "entity.name.type.pin.rainbow",
+        "entity.name.type.plugin.rainbow"
+      ],
+      "settings": {
+        "foreground": "#D0A8FF"
+      }
+    },
+    {
+      "name": "Rainbow: punctuation",
+      "scope": [
+        "punctuation.separator.at.rainbow",
+        "punctuation.rainbow",
+        "punctuation.section.parens.begin.rainbow",
+        "punctuation.section.parens.end.rainbow",
+        "punctuation.section.brackets.begin.rainbow",
+        "punctuation.section.brackets.end.rainbow",
+        "punctuation.section.braces.begin.rainbow",
+        "punctuation.section.braces.end.rainbow",
+        "punctuation.separator.key-value.rainbow"
+      ],
+      "settings": {
+        "foreground": "#9CA3AF"
+      }
+    },
+    {
+      "name": "Rainbow: SemVer",
+      "scope": [
+        "constant.numeric.version.rainbow"
+      ],
+      "settings": {
+        "foreground": "#F472B6"
+      }
+    },
+    {
+      "name": "Rainbow: event",
+      "scope": [
+        "entity.name.function.event.rainbow"
+      ],
+      "settings": {
+        "foreground": "#F1B467"
+      }
+    },
+    {
+      "name": "Rainbow: trigger",
+      "scope": [
+        "entity.name.function.trigger.rainbow"
+      ],
+      "settings": {
+        "foreground": "#FC6B83"
+      }
+    },
+    {
+      "name": "Rainbow: param (default / plugin)",
+      "scope": [
+        "variable.parameter.rainbow",
+        "variable.parameter.plugin.rainbow"
+      ],
+      "settings": {
+        "foreground": "#D0A8FF"
+      }
+    },
+    {
+      "name": "Rainbow: param (event)",
+      "scope": [
+        "variable.parameter.event.rainbow"
+      ],
+      "settings": {
+        "foreground": "#F1B467"
+      }
+    },
+    {
+      "name": "Rainbow: param (trigger)",
+      "scope": [
+        "variable.parameter.trigger.rainbow"
+      ],
+      "settings": {
+        "foreground": "#FC6B83"
+      }
+    },
+    {
+      "name": "Rainbow: string",
+      "scope": [
+        "string.quoted.double.rainbow"
+      ],
+      "settings": {
+        "foreground": "#FF9A3C"
+      }
+    },
+    {
+      "name": "Rainbow: string escape",
+      "scope": [
+        "constant.character.escape.rainbow"
+      ],
+      "settings": {
+        "foreground": "#FFB86C"
+      }
+    },
+    {
+      "name": "Rainbow: number",
+      "scope": [
+        "constant.numeric.rainbow"
+      ],
+      "settings": {
+        "foreground": "#B5CEA8"
+      }
+    },
+    {
+      "name": "Rainbow: bool",
+      "scope": [
+        "constant.language.boolean.rainbow"
+      ],
+      "settings": {
+        "foreground": "#E879F9"
+      }
+    },
+    {
+      "name": "Rainbow: null",
+      "scope": [
+        "constant.language.null.rainbow"
+      ],
+      "settings": {
+        "foreground": "#FB7185"
+      }
+    },
+    {
+      "name": "Rainbow: identifier value",
+      "scope": [
+        "variable.other.constant.rainbow"
+      ],
+      "settings": {
+        "foreground": "#22D3EE"
+      }
+    },
+    {
+      "name": "Rainbow: placeholder",
+      "scope": [
+        "variable.other.placeholder.rainbow"
+      ],
+      "settings": {
+        "foreground": "#67E8F9"
+      }
+    },
+    {
+      "name": "Rainbow: comment",
+      "scope": ["comment.line.double-slash.rainbow"],
+      "settings": { "foreground": "#6B7280" }
+    },
+    {
+      "name": "Rainbow: embedded @JSON",
+      "scope": ["entity.name.type.embedded.json.rainbow"],
+      "settings": { "foreground": "#FBBF24" }
+    },
+    {
+      "name": "Rainbow: embedded @YAML",
+      "scope": ["entity.name.type.embedded.yaml.rainbow"],
+      "settings": { "foreground": "#34D399" }
+    },
+    {
+      "name": "Rainbow: embedded @XML",
+      "scope": ["entity.name.type.embedded.xml.rainbow"],
+      "settings": { "foreground": "#FB7185" }
+    },
+    {
+      "name": "Rainbow: embedded @HTML",
+      "scope": ["entity.name.type.embedded.html.rainbow"],
+      "settings": { "foreground": "#F97316" }
+    },
+    {
+      "name": "Rainbow: embedded @MARKDOWN",
+      "scope": ["entity.name.type.embedded.markdown.rainbow"],
+      "settings": { "foreground": "#38BDF8" }
+    },
+    {
+      "name": "Rainbow: embedded punctuation",
+      "scope": [
+        "punctuation.definition.embedded.begin.rainbow",
+        "punctuation.definition.embedded.paren.begin.rainbow",
+        "punctuation.definition.embedded.paren.end.rainbow"
+      ],
+      "settings": { "foreground": "#9CA3AF" }
+    }
+  ]
+}

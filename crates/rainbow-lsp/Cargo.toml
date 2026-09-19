@@ -1,0 +1,19 @@
+[package]
+name = "rainbow-lsp"
+description = "Language Server Protocol implementation for the Rainbow DSL."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "rainbow-lsp"
+path = "src/main.rs"
+
+[dependencies]
+rainbow-parser = { path = "../rainbow-parser" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["io-std", "macros", "rt-multi-thread", "sync"] }
+tower-lsp = "0.20"

@@ -1,0 +1,19 @@
+[
+  {
+    "code": "rainbow.semantic.nameKindConflict",
+    "message": "Name \"Foo\" is used as both a plugin and an event; plugin and event names must be unique across kinds.",
+    "severity": "error",
+    "range": {
+      "start": {
+        "offset": 16,
+        "line": 3,
+        "column": 5
+      },
+      "end": {
+        "offset": 19,
+        "line": 3,
+        "column": 8
+      }
+    }
+  }
+]

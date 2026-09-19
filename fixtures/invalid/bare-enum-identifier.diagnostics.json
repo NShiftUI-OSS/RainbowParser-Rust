@@ -1,0 +1,19 @@
+[
+  {
+    "code": "rainbow.parser.unexpectedToken",
+    "message": "Enum identifier values must start with '.'; did you mean '.primary'?",
+    "severity": "error",
+    "range": {
+      "start": {
+        "offset": 16,
+        "line": 1,
+        "column": 17
+      },
+      "end": {
+        "offset": 23,
+        "line": 1,
+        "column": 24
+      }
+    }
+  }
+]

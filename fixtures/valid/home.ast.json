@@ -1,0 +1,66 @@
+{
+  "uses": [],
+  "nodes": [
+    {
+      "name": "Screen",
+      "parameters": [
+        {
+          "name": "name",
+          "value": {
+            "kind": "string",
+            "value": "Home"
+          }
+        }
+      ],
+      "block": {
+        "children": [
+          {
+            "name": "Button",
+            "parameters": [
+              {
+                "name": "title",
+                "value": {
+                  "kind": "string",
+                  "value": "Entrar"
+                }
+              },
+              {
+                "name": "variant",
+                "value": {
+                  "kind": "identifier",
+                  "value": "primary"
+                }
+              }
+            ],
+            "block": {
+              "children": [
+                {
+                  "name": "OnTap",
+                  "parameters": [],
+                  "block": {
+                    "children": [
+                      {
+                        "name": "Navigate",
+                        "parameters": [
+                          {
+                            "name": "to",
+                            "value": {
+                              "kind": "string",
+                              "value": "Dashboard"
+                            }
+                          }
+                        ],
+                        "block": null
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
+

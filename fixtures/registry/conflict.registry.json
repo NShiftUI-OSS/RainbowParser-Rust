@@ -1,0 +1,4 @@
+{
+  "plugins": ["Screen", "Navigate"],
+  "events": ["Navigate", "ShowToast"]
+}

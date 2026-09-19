@@ -1,0 +1,16 @@
+use Screen@1.0.0
+
+Screen(
+  json: @JSON({"key": "value", "n": 1}),
+  yaml: @YAML(enabled: true
+list:
+  - a
+  - b),
+  xml: @XML(<user id="1"><name>Ada</name></user>),
+  html: @HTML(<div class="card">Hi</div>),
+  md: @MARKDOWN(# Title
+
+Hello **world**),
+  blob: @JSON(#{payload})
+) {
+}

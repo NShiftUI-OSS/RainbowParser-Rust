@@ -1,0 +1,18 @@
+[package]
+name = "rainbow-cli"
+description = "Command-line interface for the Rainbow parser."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "rainbow"
+path = "src/main.rs"
+
+[dependencies]
+rainbow-parser = { path = "../rainbow-parser" }
+serde_json = "1"
+ureq = "2.12"
+

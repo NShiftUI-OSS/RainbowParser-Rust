@@ -1,0 +1,19 @@
+[
+  {
+    "code": "rainbow.semantic.invalidNodeName",
+    "message": "plugin name \"dasdadsa\" must be UpperCamelCase ASCII letters (e.g. Screen, OnTap, SendHTTPRequest).",
+    "severity": "error",
+    "range": {
+      "start": {
+        "offset": 11,
+        "line": 2,
+        "column": 3
+      },
+      "end": {
+        "offset": 19,
+        "line": 2,
+        "column": 11
+      }
+    }
+  }
+]
