@@ -1,0 +1,12 @@
+---
+description: #{Name} expand is backend-only; do not push templates into iOS/Android parsers
+alwaysApply: true
+---
+
+# Placeholders are backend-only
+
+This crate is the global Rainbow API for the **backend** (parse, format, validate, expand, LSP, CLI).
+
+- `#{Name}` holes and `expand_placeholders` / `rainbow expand` stay here.
+- iOS and Android parsers consume **concrete** Rainbow after expand. Do not add `RainbowName`, placeholder use/node/value, or expand APIs to those libraries.
+- Concrete grammar to mirror on mobile is listed under "shared features" in `docs/PARITY.md`. Backend-only features are listed separately in the same file.

@@ -3,6 +3,9 @@
 //! Core `decode` / `encode` accept templates with `#{...}` placeholders.
 //! Backends expand holes via [`expand_placeholders`] before shipping concrete
 //! Rainbow to mobile clients.
+//!
+//! `#{Name}` substitution is **backend-only**. iOS and Android parsers must
+//! not grow an expand API; they receive concrete Rainbow after this step.
 
 mod ast;
 mod diagnostics;

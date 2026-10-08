@@ -1,0 +1,65 @@
+name: Delete release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: SemVer to delete, with or without v (example 0.1.0-beta.1 or v0.1.0-beta.1)
+        required: true
+        type: string
+
+concurrency:
+  group: delete-release-${{ github.event.inputs.tag }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  ALLOWED_ACTOR: ArthurPorto-PucMinas
+
+jobs:
+  setup:
+    name: setup
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.vars.outputs.tag }}
+      tag_bare: ${{ steps.vars.outputs.tag_bare }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: vars
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          TAG_INPUT: ${{ github.event.inputs.tag }}
+        run: bash scripts/ci/delete-release/setup.sh
+
+  delete-release:
+    name: delete-release
+    needs: [setup]
+    runs-on: ubuntu-latest
+    outputs:
+      deleted: ${{ steps.del.outputs.deleted }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: del
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.setup.outputs.tag }}
+          TAG_BARE: ${{ needs.setup.outputs.tag_bare }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: bash scripts/ci/delete-release/delete-release.sh
+
+  delete-tag:
+    name: delete-tag
+    needs: [setup, delete-release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ github.token }}
+      - env:
+          TAG: ${{ needs.setup.outputs.tag }}
+          TAG_BARE: ${{ needs.setup.outputs.tag_bare }}
+          RELEASE_DELETED: ${{ needs.delete-release.outputs.deleted }}
+        run: bash scripts/ci/delete-release/delete-tag.sh

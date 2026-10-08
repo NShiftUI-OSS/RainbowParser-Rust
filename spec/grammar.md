@@ -3,7 +3,8 @@
 Rainbow is a textual DSL for describing native SDUI payloads. This grammar is
 syntax-only; semantic validation belongs to the application layer.
 
-Parity target: `mobile/iOS/packages/rainbowparser` (Swift).
+Parity target for **concrete** grammar: iOS `RainbowParser` and (future) Android.
+Template holes (`#{Name}`) and `expand` are **backend-only** in this crate.
 
 ## Grammar
 
@@ -55,7 +56,10 @@ Notes:
 - `use` is optional. Semantic layers resolve unpinned names to the latest registered version.
 - Line comments use `//` through end of line (like many C-family languages). `#` alone is
   not a comment — `#` starts a `#{Name}` placeholder.
-- Templates may use `#{Name}` holes (backend expands before shipping to mobile):
+- Templates may use `#{Name}` holes. **This is backend-only.** The Rust crate
+  (global API) expands holes before shipping to mobile. iOS and Android parsers
+  must accept **concrete** Rainbow only — they must not implement `expand` or
+  treat `#{Name}` as a mobile runtime substitution API:
   - `use Name@1.0.0` — concrete SemVer pin (**required** for concrete names)
   - `use #{Name}` — template pin; expand map value must be `Name@MAJOR.MINOR.PATCH`
     (e.g. `PromoBanner@1.0.0`) → becomes `use PromoBanner@1.0.0`

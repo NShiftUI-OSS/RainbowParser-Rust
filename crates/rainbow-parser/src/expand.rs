@@ -12,6 +12,9 @@ use crate::lexer::{lex, RainbowTokenKind};
 ///
 /// This is the backend integration point for CMS / multi-backend pipelines:
 /// template → `expand_placeholders` → concrete Rainbow → validate / ship.
+///
+/// Not part of the iOS / Android library contract. Mobile runtimes must not
+/// call this; they parse the already-expanded document.
 pub fn expand_placeholders(
     source: &str,
     substitutions: &BTreeMap<String, String>,

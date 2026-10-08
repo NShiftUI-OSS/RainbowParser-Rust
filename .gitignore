@@ -2,6 +2,11 @@
 target/
 **/*.rs.bk
 
+# wasm-pack output and CI release scratch
+pkg/
+build/
+.ci-version/
+
 # Coverage and profiling artifacts
 coverage/
 tarpaulin-report.html

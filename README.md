@@ -4,8 +4,13 @@
 Rainbow DSL. It parses Rainbow source into a generic AST, prints the AST back to
 canonical Rainbow text, and returns structured diagnostics.
 
-Core parse/format accept templates with `#{Name}` placeholders and embedded
-`@LANG(...)` parameter payloads (`JSON` / `YAML` / `XML` / `HTML` / `MARKDOWN`).
+Core parse/format in **this crate** accept templates with `#{Name}` placeholders
+and embedded `@LANG(...)` parameter payloads (`JSON` / `YAML` / `XML` / `HTML` /
+`MARKDOWN`). That template/expand surface is the **global backend API**.
+
+Mobile parsers (iOS, Android) consume **concrete** Rainbow only. They do not
+implement `#{Name}` substitution.
+
 `rainbow validate` (and the LSP) check naming/positions and embedded bodies;
 `rainbow expand --map vars.json` is the backend substitution step (including
 `@JSON(#{blob})`) before shipping concrete Rainbow. Use `validate --concrete` /
@@ -33,6 +38,7 @@ crates/
   rainbow-parser/  # core lexer, parser, AST, diagnostics, formatter, JSON output
   rainbow-cli/     # CLI binary: rainbow
   rainbow-lsp/     # Language Server (VS Code / Cursor / other LSP clients)
+  rainbow-wasm/    # WASM bindings for the Node backend and React
 editors/
   vscode-rainbow/  # VS Code + Cursor extension (TypeScript client)
 fixtures/          # golden fixtures shared with other implementations
@@ -47,8 +53,10 @@ tooling. Keep it aligned with:
 - iOS Swift: `mobile/iOS/packages/rainbowparser`
 - (future) Android / other runtimes
 
-When syntax changes (e.g. `use Name@1.0.0`, `@`, SemVer tokens), update **this**
-parser + `spec/grammar.md` + `fixtures/`, then mirror into Swift/Android.
+When syntax changes (e.g. `use Name@1.0.0`, `@`, SemVer tokens, `.enum`), update
+**this** parser + `spec/grammar.md` + `fixtures/`, then mirror the **concrete**
+subset into Swift/Android. Do **not** mirror `#{Name}` / `expand` into mobile
+libraries — those stay in this crate (see `docs/PARITY.md`).
 
 ## Requirements
 
@@ -210,9 +218,26 @@ let document = decode(r#"Button(title: "Entrar")"#)?;
 let formatted = encode(&document);
 ```
 
+## Release
+
+Actions → **Release** (branch + SemVer with or without `v`). Delete: **Delete release** (SemVer with or without `v`). Only `ArthurPorto-PucMinas`.
+
+If the SemVer input already matches `RAINBOW_PARSER_VERSION` and the tag/Release does not exist yet, bump and commit are skipped and the WASM artifacts publish at the current version. If the tag or the GitHub Release already exists, validate fails.
+
+The bump updates the workspace `version`, `RAINBOW_PARSER_VERSION`, the version assertion in `rainbow_parser_tests`, `editors/vscode-rainbow` `package.json` / `package-lock.json`, and the beta line in this README.
+
+The YAML files in `.github/workflows/` only orchestrate. Each job's logic lives in `scripts/ci/release/` and `scripts/ci/delete-release/`. Colors and failures with context: `scripts/helpers.sh`. To reproduce a job locally:
+
+```bash
+ALLOWED_ACTOR=ArthurPorto-PucMinas GITHUB_ACTOR=ArthurPorto-PucMinas \
+  VERSION_INPUT=0.1.0-beta.1 BRANCH_INPUT=main \
+  bash scripts/ci/release/setup.sh
+```
+
+One **Release** workflow builds the Node package and the React package in the same job. If either build fails, nothing is published. **Delete release** deletes that GitHub Release, so both packages go away together. Node installs `rainbow-parser-wasm-node.tgz`. React/Vite installs `rainbow-parser-wasm-web.tgz`. The JSON envelopes match `rainbow <command> --json`. See `docs/WASM.md`.
+
 ## Roadmap
 
 - Keep golden fixtures aligned with iOS and Android implementations.
-- Add WASM packaging for browser/frontend usage.
 - Add optional C ABI once the CLI JSON contract stabilizes.
 

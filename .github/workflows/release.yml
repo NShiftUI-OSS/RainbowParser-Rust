@@ -1,0 +1,194 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Branch whose HEAD will be built
+        required: true
+        type: string
+        default: main
+      version:
+        description: SemVer with or without v (example 0.1.0-beta.2 or v0.1.0-beta.2)
+        required: true
+        type: string
+
+concurrency:
+  group: release-${{ github.event.inputs.branch }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  ALLOWED_ACTOR: ArthurPorto-PucMinas
+
+jobs:
+  setup:
+    name: setup
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.vars.outputs.version }}
+      branch: ${{ steps.vars.outputs.branch }}
+      tag: ${{ steps.vars.outputs.tag }}
+      tag_bare: ${{ steps.vars.outputs.tag_bare }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: vars
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          VERSION_INPUT: ${{ github.event.inputs.version }}
+          BRANCH_INPUT: ${{ github.event.inputs.branch }}
+        run: bash scripts/ci/release/setup.sh
+
+  validate:
+    name: validate
+    needs: [setup]
+    runs-on: ubuntu-latest
+    outputs:
+      bump: ${{ steps.check.outputs.bump }}
+      sha: ${{ steps.check.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.setup.outputs.branch }}
+          fetch-depth: 0
+      - id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.setup.outputs.version }}
+          TAG: ${{ needs.setup.outputs.tag }}
+          TAG_BARE: ${{ needs.setup.outputs.tag_bare }}
+        run: bash scripts/ci/release/validate.sh
+
+  bump:
+    name: bump
+    needs: [setup, validate]
+    if: needs.validate.outputs.bump == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.setup.outputs.branch }}
+      - env:
+          VERSION: ${{ needs.setup.outputs.version }}
+        run: bash scripts/ci/release/bump.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: versioned-source
+          path: .ci-version/
+
+  test:
+    name: test
+    needs: [setup, validate, bump]
+    if: |
+      always() &&
+      !cancelled() &&
+      needs.setup.result == 'success' &&
+      needs.validate.result == 'success' &&
+      (needs.bump.result == 'success' || needs.bump.result == 'skipped')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.setup.outputs.branch }}
+      - if: needs.bump.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: versioned-source
+          path: .ci-version
+      - uses: ./.github/actions/setup-rust-ci
+      - run: bash scripts/ci/release/test.sh
+
+  assemble:
+    name: assemble
+    needs: [setup, test, bump]
+    if: |
+      always() &&
+      !cancelled() &&
+      needs.test.result == 'success' &&
+      (needs.bump.result == 'success' || needs.bump.result == 'skipped')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.setup.outputs.branch }}
+      - if: needs.bump.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: versioned-source
+          path: .ci-version
+      - uses: ./.github/actions/setup-rust-ci
+      - run: bash scripts/ci/release/assemble.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-wasm
+          path: build/outputs/wasm/*.tgz
+          if-no-files-found: error
+
+  commit:
+    name: commit
+    needs: [setup, assemble, bump]
+    if: needs.bump.result == 'success'
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.push.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.setup.outputs.branch }}
+          token: ${{ github.token }}
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: versioned-source
+          path: .ci-version
+      - id: push
+        env:
+          VERSION: ${{ needs.setup.outputs.version }}
+          BRANCH: ${{ needs.setup.outputs.branch }}
+        run: bash scripts/ci/release/commit.sh
+
+  tag:
+    name: tag
+    needs: [setup, validate, assemble, commit]
+    if: |
+      always() &&
+      !cancelled() &&
+      needs.assemble.result == 'success' &&
+      (needs.commit.result == 'success' || needs.commit.result == 'skipped')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.commit.outputs.sha || needs.validate.outputs.sha }}
+          token: ${{ github.token }}
+          fetch-depth: 0
+      - env:
+          TAG: ${{ needs.setup.outputs.tag }}
+          SHA: ${{ needs.commit.outputs.sha || needs.validate.outputs.sha }}
+        run: bash scripts/ci/release/tag.sh
+
+  release:
+    name: release
+    needs: [setup, tag]
+    if: |
+      always() &&
+      !cancelled() &&
+      needs.setup.result == 'success' &&
+      needs.tag.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-wasm
+          path: dist
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.setup.outputs.tag }}
+          VERSION: ${{ needs.setup.outputs.version }}
+          BRANCH: ${{ needs.setup.outputs.branch }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          WASM_DIR: dist
+        run: bash scripts/ci/release/release.sh

@@ -14,7 +14,7 @@ Permitir que parâmetros Rainbow carreguem payloads de linguagens de marcação/
 2. Validação de erro **completa** da linguagem dentro dos `(...)`.
 3. Highlight + cores distintas por `@Lang` na extensão.
 4. Formatação correta do envelope Rainbow **e** do body embutido.
-5. Interpolação só via blob inteiro: `@LANG(#{name})` (reusa o sistema `#{…}` / `rainbow expand`).
+5. Interpolação só via blob inteiro: `@LANG(#{name})` — **somente no crate Rust** (`rainbow expand`). iOS/Android não implementam essa substituição; recebem o body já concreto.
 
 Mobile continua recebendo Rainbow **concreto** (pós-expand + validate).
 

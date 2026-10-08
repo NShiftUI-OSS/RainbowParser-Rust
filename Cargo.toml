@@ -3,6 +3,7 @@ members = [
     "crates/rainbow-parser",
     "crates/rainbow-cli",
     "crates/rainbow-lsp",
+    "crates/rainbow-wasm",
 ]
 resolver = "2"
 
