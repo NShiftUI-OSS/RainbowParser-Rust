@@ -42,8 +42,8 @@ Hello **world**),
 ) {
   Text(text: "Hello")
 
-  // Node placeholder: map value is the bare plugin name (no version suffix)
-  #{PluginNode}
+  // Node placeholder: map value is the bare plugin name. The template supplies ().
+  #{PluginNode}()
 
   PromoBanner(title: "Sale")
 

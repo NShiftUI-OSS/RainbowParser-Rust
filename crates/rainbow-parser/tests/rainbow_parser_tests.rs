@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use rainbow_parser::{
     collect_embedded_regions, decode, encode, expand_and_validate, expand_placeholders,
     format_embedded, format_source, lex, parse_substitution_map, parse_success_to_json,
-    validate_concrete_source, validate_source, EmbeddedLanguage, RainbowBlock, RainbowDocument,
+    validate_concrete_source, validate_source, EmbeddedLanguage, RainbowDocument,
     RainbowFormatStyle, RainbowName, RainbowNode, RainbowObjectEntry, RainbowParameter,
     RainbowTaggedBody, RainbowTokenKind, RainbowUseDeclaration, RainbowValue,
     RAINBOW_PARSER_VERSION,
@@ -381,12 +381,11 @@ fn printer_encodes_canonical_rainbow() {
                 RainbowParameter::new("title", RainbowValue::String("Entrar".to_string())),
                 RainbowParameter::new("variant", RainbowValue::Identifier("primary".to_string())),
             ],
-            vec![RainbowNode {
-                name: RainbowName::ident("OnTap"),
-                parameters: vec![],
-                block: Some(RainbowBlock::new(vec![])),
-                leading: Default::default(),
-            }],
+            vec![RainbowNode::with_children(
+                "OnTap",
+                vec![],
+                vec![RainbowNode::new("Navigate")],
+            )],
         )],
     )]);
 
@@ -398,6 +397,7 @@ fn printer_encodes_canonical_rainbow() {
     variant: .primary
   ) {
     OnTap {
+      Navigate()
     }
   }
 }"#
@@ -432,6 +432,152 @@ fn printer_breaks_parameters_when_two_or_more() {
   Text(value: "Hi")
 }"#
     );
+}
+
+#[test]
+fn printer_breaks_object_fields_and_emits_constructors() {
+    let formatted = format_source(
+        r#"
+        Screen(
+          navigationBar: (title: "Feedback", theme: "amber", leading: "back"),
+          scroll: (enabled: true, fastRefresh: true)
+        ) {
+          VerticalStack(style: (alignment: .leading, spacing: 12)) {
+            Progress(value: 0.66)
+            Spinner
+            Separator
+          }
+        }
+        "#,
+    )
+    .expect("format");
+
+    assert_eq!(
+        formatted,
+        r#"Screen(
+  navigationBar: (
+    title: "Feedback",
+    theme: "amber",
+    leading: "back"
+  ),
+  scroll: (
+    enabled: true,
+    fastRefresh: true
+  )
+) {
+  VerticalStack(
+    style: (
+      alignment: .leading,
+      spacing: 12
+    )
+  ) {
+    Progress(value: 0.66)
+
+    Spinner()
+
+    Separator()
+  }
+}"#
+    );
+}
+
+#[test]
+fn printer_breaks_nested_objects_at_every_level() {
+    let formatted = format_source(
+        "VerticalStack(style: (alignment: (horizontal: .leading, vertical: .center), spacing: 12))",
+    )
+    .expect("format");
+
+    assert_eq!(
+        formatted,
+        r#"VerticalStack(
+  style: (
+    alignment: (
+      horizontal: .leading,
+      vertical: .center
+    ),
+    spacing: 12
+  )
+)"#
+    );
+}
+
+#[test]
+fn printer_keeps_single_field_objects_and_scalars_compact() {
+    assert_eq!(
+        format_source(r#"Node(meta: (id: "home"))"#).expect("format"),
+        r#"Node(meta: (id: "home"))"#
+    );
+    assert_eq!(
+        format_source("Progress(value: 0.66)").expect("format"),
+        "Progress(value: 0.66)"
+    );
+    assert_eq!(format_source("Spinner").expect("format"), "Spinner()");
+    assert_eq!(format_source("Separator()").expect("format"), "Separator()");
+}
+
+#[test]
+fn validate_rejects_plugin_and_event_without_constructor() {
+    let error = validate_source(
+        r#"
+        Screen() {
+          Spinner
+          OnTap {
+            Navigate
+          }
+        }
+        "#,
+    )
+    .expect_err("bare calls should fail");
+
+    let plugins = error
+        .diagnostics
+        .iter()
+        .find(|diagnostic| diagnostic.message.contains("Plugin \"Spinner\""))
+        .expect("spinner diagnostic");
+    assert_eq!(plugins.code, "rainbow.semantic.missingConstructor");
+    assert!(plugins.message.contains("Write Spinner()."));
+
+    let events = error
+        .diagnostics
+        .iter()
+        .find(|diagnostic| diagnostic.message.contains("Event \"Navigate\""))
+        .expect("navigate diagnostic");
+    assert_eq!(events.code, "rainbow.semantic.missingConstructor");
+    assert!(events.message.contains("Write Navigate()."));
+}
+
+#[test]
+fn validate_rejects_empty_trigger_and_allows_one_event() {
+    let empty = validate_source(
+        r#"
+        Screen() {
+          OnTap {
+          }
+        }
+        "#,
+    )
+    .expect_err("empty trigger should fail");
+    assert_eq!(empty.diagnostics.len(), 1);
+    assert_eq!(empty.diagnostics[0].code, "rainbow.semantic.emptyTrigger");
+    assert!(empty.diagnostics[0].message.contains("Trigger \"OnTap\""));
+    assert!(empty.diagnostics[0].message.contains("at least one event"));
+
+    let bare = validate_source("OnTap").expect_err("trigger without a block should fail");
+    assert_eq!(bare.diagnostics[0].code, "rainbow.semantic.emptyTrigger");
+
+    validate_source(
+        r#"
+        Screen() {
+          OnTap {
+            Navigate()
+          }
+          Spinner()
+          Separator()
+        }
+        "#,
+    )
+    .expect("trigger with an event should validate");
 }
 
 #[test]
@@ -486,7 +632,15 @@ fn printer_encodes_all_value_shapes() {
   disabled: false,
   variant: .primary,
   items: ["a", 1, null],
-  meta: (id: "home", "dash-key": false, "": 0, "1bad": 1, "a-": 2, _id: 4, A1: 5)
+  meta: (
+    id: "home",
+    "dash-key": false,
+    "": 0,
+    "1bad": 1,
+    "a-": 2,
+    _id: 4,
+    A1: 5
+  )
 )"#
     );
 }
@@ -502,7 +656,7 @@ fn printer_uses_custom_format_style() {
 
     assert_eq!(
         rainbow_parser::format_document(&document, &style),
-        "Root {\r\n    Child\r\n}"
+        "Root() {\r\n    Child()\r\n}"
     );
 }
 
@@ -584,8 +738,8 @@ fn name_registry_rejects_shared_plugin_and_event_names() {
 fn validate_source_allows_distinct_plugin_and_event_positions() {
     let document = rainbow_parser::validate_source(
         r#"
-        Screen {
-          Button {
+        Screen() {
+          Button() {
             OnTap {
               Navigate(to: "Home")
             }
@@ -602,7 +756,7 @@ fn validate_source_allows_distinct_plugin_and_event_positions() {
 fn validate_source_rejects_same_name_in_plugin_and_event_positions() {
     let error = rainbow_parser::validate_source(
         r#"
-        Foo {
+        Foo() {
           OnTap {
             Foo(to: "Home")
           }
@@ -645,8 +799,8 @@ fn is_upper_camel_case_name_matches_macro_rules() {
 fn validate_source_rejects_lowercase_plugin_name() {
     let error = rainbow_parser::validate_source(
         r#"
-        Screen {
-          dasdadsa
+        Screen() {
+          dasdadsa()
         }
         "#,
     )
@@ -664,7 +818,7 @@ fn validate_source_rejects_lowercase_plugin_name() {
 
 #[test]
 fn validate_source_rejects_lowercase_use_pin_name() {
-    let error = rainbow_parser::validate_source("use screen@1.0.0\nScreen {}")
+    let error = rainbow_parser::validate_source("use screen@1.0.0\nScreen() {}")
         .expect_err("lowercase use pin should fail");
 
     assert!(error.diagnostics.iter().any(|diagnostic| diagnostic.code
@@ -716,8 +870,8 @@ fn expand_placeholders_replaces_every_occurrence() {
         r#"
 use Screen@1.0.0
 use #{UsePin}
-Screen {
-  #{PlaceholderPluginName}
+Screen() {
+  #{PlaceholderPluginName}()
   Button(state: #{PlaceholderParamName})
 }
 "#
@@ -754,7 +908,7 @@ fn validate_source_allows_template_placeholders() {
     validate_source(
         r#"
         use #{UsePin}
-        Screen {
+        Screen() {
           #{PlaceholderPluginName}
         }
         "#,
@@ -936,7 +1090,7 @@ Screen() {
     )
     .expect("format");
 
-    assert!(formatted.contains("use Screen@1.0.0\n\n// root comment\nScreen {"));
+    assert!(formatted.contains("use Screen@1.0.0\n\n// root comment\nScreen() {"));
     assert!(formatted.contains("Text(text: \"a\")\n\n  // between plugins\n  Button(title: \"b\")"));
 }
 
@@ -1004,6 +1158,15 @@ fn validate_embedded_yaml_xml_html_markdown() {
         .diagnostics
         .iter()
         .any(|d| d.code == "rainbow.embedded.markdown.unclosedFence"));
+}
+
+#[test]
+fn fixture_objects_format_matches_canonical() {
+    let source = include_str!("../../../fixtures/valid/objects.rbw");
+    let expected = include_str!("../../../fixtures/valid/objects.formatted.rbw");
+    let formatted = format_source(source).expect("format objects");
+    assert_eq!(formatted, expected.trim_end_matches(['\n', '\r']));
+    validate_source(&formatted).expect("formatted objects validate");
 }
 
 #[test]

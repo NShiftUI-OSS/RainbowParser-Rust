@@ -7,7 +7,7 @@ Screen(
 ) {
   Text(text: "Teste")
 
-  #{PlaceholderPluginName}
+  #{PlaceholderPluginName}()
 
   Button(
     title: "Teste",

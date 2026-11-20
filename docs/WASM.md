@@ -58,7 +58,7 @@ const require = createRequire(import.meta.url);
 const rainbow = require("rainbow-parser-wasm-node");
 ```
 
-Map values are Rainbow fragments inserted verbatim. A string value includes the quotes (`"Entrar"`). A node fragment is source text (`PromoBanner`).
+Map values are Rainbow fragments inserted verbatim. A string value includes the quotes (`"Entrar"`). A node-name hole is source text placed where the template wrote the call (`#{Plugin}()` with map value `PromoBanner` becomes `PromoBanner()`).
 
 ## React (Vite)
 

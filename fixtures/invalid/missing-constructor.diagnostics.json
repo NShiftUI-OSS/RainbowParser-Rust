@@ -1,0 +1,36 @@
+[
+  {
+    "code": "rainbow.semantic.missingConstructor",
+    "message": "Plugin \"Spinner\" must be called as a constructor, even when it takes no parameters. Write Spinner().",
+    "severity": "error",
+    "range": {
+      "start": {
+        "offset": 13,
+        "line": 2,
+        "column": 3
+      },
+      "end": {
+        "offset": 20,
+        "line": 2,
+        "column": 10
+      }
+    }
+  },
+  {
+    "code": "rainbow.semantic.missingConstructor",
+    "message": "Event \"Navigate\" must be called as a constructor, even when it takes no parameters. Write Navigate().",
+    "severity": "error",
+    "range": {
+      "start": {
+        "offset": 35,
+        "line": 4,
+        "column": 5
+      },
+      "end": {
+        "offset": 43,
+        "line": 4,
+        "column": 13
+      }
+    }
+  }
+]

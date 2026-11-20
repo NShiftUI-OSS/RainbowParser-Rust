@@ -1,0 +1,36 @@
+[
+  {
+    "code": "rainbow.semantic.emptyTrigger",
+    "message": "Trigger \"OnTap\" must contain at least one event. An empty trigger does not run any action.",
+    "severity": "error",
+    "range": {
+      "start": {
+        "offset": 13,
+        "line": 2,
+        "column": 3
+      },
+      "end": {
+        "offset": 18,
+        "line": 2,
+        "column": 8
+      }
+    }
+  },
+  {
+    "code": "rainbow.semantic.emptyTrigger",
+    "message": "Trigger \"OnSuccess\" must contain at least one event. An empty trigger does not run any action.",
+    "severity": "error",
+    "range": {
+      "start": {
+        "offset": 27,
+        "line": 4,
+        "column": 3
+      },
+      "end": {
+        "offset": 36,
+        "line": 4,
+        "column": 12
+      }
+    }
+  }
+]

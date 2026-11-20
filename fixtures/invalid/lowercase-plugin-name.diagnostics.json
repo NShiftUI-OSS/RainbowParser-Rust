@@ -5,12 +5,12 @@
     "severity": "error",
     "range": {
       "start": {
-        "offset": 11,
+        "offset": 13,
         "line": 2,
         "column": 3
       },
       "end": {
-        "offset": 19,
+        "offset": 21,
         "line": 2,
         "column": 11
       }

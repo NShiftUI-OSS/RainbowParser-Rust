@@ -1,0 +1,6 @@
+Screen() {
+  Spinner
+  OnTap {
+    Navigate
+  }
+}

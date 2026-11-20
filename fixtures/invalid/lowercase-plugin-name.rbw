@@ -1,3 +1,3 @@
-Screen {
-  dasdadsa
+Screen() {
+  dasdadsa()
 }

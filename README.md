@@ -203,7 +203,10 @@ Node(
   disabled: false,
   variant: .primary,
   items: ["a", 1, null],
-  meta: (id: "home", "dash-key": false),
+  meta: (
+    id: "home",
+    "dash-key": false
+  ),
   emptyArray: [],
   emptyObject: ()
 )

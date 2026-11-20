@@ -33,10 +33,12 @@ pub fn is_upper_camel_case_name(name: &str) -> bool {
     }
 }
 
-/// Validate document naming rules that do not require a DI container:
+/// Validate document rules that do not require a DI container:
 /// - concrete plugin / event / trigger / `use` names must be UpperCamelCase
 /// - no concrete name used both as a plugin and as an event
-/// - placeholders skip casing checks (expanded later by backends)
+/// - every concrete plugin and event call uses a constructor (`Name()`), even with no parameters
+/// - every trigger contains at least one child
+/// - placeholders skip these checks (expanded later by backends)
 pub fn analyze_document_name_kinds(
     document: &RainbowDocument,
     source: &str,
@@ -163,6 +165,16 @@ fn walk_node(
             let range =
                 next_identifier_range(source, name, skip).unwrap_or_else(|| document_range(source));
             push_casing_diagnostic(diagnostics, name, "trigger", range);
+            if node.children().is_empty() {
+                diagnostics.push(RainbowDiagnostic::error(
+                    "rainbow.semantic.emptyTrigger",
+                    format!(
+                        "Trigger \"{name}\" must contain at least one event. \
+An empty trigger does not run any action."
+                    ),
+                    range,
+                ));
+            }
 
             for child in children {
                 walk_node(
@@ -185,6 +197,7 @@ fn walk_node(
             if let RainbowName::Ident(name) = &node.name {
                 let range = record_use(plugin_uses, name, source, name_occurrences);
                 push_casing_diagnostic(diagnostics, name, "plugin", range);
+                push_constructor_diagnostic(diagnostics, source, name, "Plugin", range);
             }
             for child in children {
                 walk_node(
@@ -202,6 +215,7 @@ fn walk_node(
             if let RainbowName::Ident(name) = &node.name {
                 let range = record_use(event_uses, name, source, name_occurrences);
                 push_casing_diagnostic(diagnostics, name, "event", range);
+                push_constructor_diagnostic(diagnostics, source, name, "Event", range);
             }
             for child in children {
                 walk_node(
@@ -216,6 +230,47 @@ fn walk_node(
             }
         }
     }
+}
+
+fn push_constructor_diagnostic(
+    diagnostics: &mut Vec<RainbowDiagnostic>,
+    source: &str,
+    name: &str,
+    kind: &str,
+    range: RainbowSourceRange,
+) {
+    if call_has_argument_list(source, range.end.offset) {
+        return;
+    }
+
+    diagnostics.push(RainbowDiagnostic::error(
+        "rainbow.semantic.missingConstructor",
+        format!(
+            "{kind} \"{name}\" must be called as a constructor, even when it takes no parameters. \
+Write {name}()."
+        ),
+        range,
+    ));
+}
+
+/// `(` after the name, allowing whitespace and `//` line comments between them.
+fn call_has_argument_list(source: &str, offset: usize) -> bool {
+    let bytes = source.as_bytes();
+    let mut index = offset;
+    while index < bytes.len() {
+        match bytes[index] {
+            b' ' | b'\t' | b'\r' | b'\n' => index += 1,
+            b'/' if bytes.get(index + 1) == Some(&b'/') => {
+                index += 2;
+                while index < bytes.len() && bytes[index] != b'\n' {
+                    index += 1;
+                }
+            }
+            b'(' => return true,
+            _ => return false,
+        }
+    }
+    false
 }
 
 fn push_casing_diagnostic(

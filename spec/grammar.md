@@ -70,6 +70,18 @@ Notes:
 - Plugin, event, trigger, and concrete `use` pin names must be **UpperCamelCase** ASCII
   letters only (e.g. `Screen`, `OnTap`, `SendHTTPRequest`). Parameter names,
   enum values (`.name`), and placeholder keys are not constrained by this rule.
+- Every concrete **plugin** and **event** call is a constructor. The argument
+  list is required even when it is empty: `Spinner()` and `Navigate()`, never
+  `Spinner` or `Navigate`. A missing `()` is `rainbow.semantic.missingConstructor`.
+  `On*` triggers are not constructors (`OnTap { Navigate() }`).
+- A trigger exists to hold actions. It must contain at least one child.
+  `OnTap { }` and a bare `OnTap` are `rainbow.semantic.emptyTrigger`.
+  A trigger with one or more events is valid. Empty `{}` blocks on plugins
+  stay legal (`Empty() { }`).
+- `#{Name}` holes skip the constructor check until expand. When the map value
+  is only a plugin or event name, write the call in the template:
+  `#{Plugin}()` → `PromoBanner()`. A substitution that is already a full call
+  replaces the hole by itself and must include its own `()`.
 - Concrete validation (`validate --concrete` / `expand --validate`) rejects leftover `#{…}`.
 - Embedded `@LANG(...)` values appear **only** as parameter values (not node/`use` names):
   - Payload is raw language text inside `(...)` (not a Rainbow string).
@@ -104,10 +116,15 @@ Supported string escapes:
 - Leading `//` line comments on `use` / nodes / parameters are preserved and
   printed immediately above the construct at the same indent.
 - Nodes are indented with two spaces per level.
-- A single parameter stays inline: `Button(title: "Entrar")`, unless its value is
-  a multiline `@LANG(...)` body.
-- When a plugin/event has **two or more** parameters, each parameter is on its
-  own indented line (**no** trailing comma after the last parameter):
+- A single scalar parameter stays inline: `Button(title: "Entrar")` and
+  `Progress(value: 0.66)`, unless its value breaks (multiline `@LANG(...)`, or
+  an object that breaks).
+- A plugin or event with no parameters is still a constructor: `Spinner()` and
+  `Separator()`. Triggers with no parameters stay `OnTap` (no empty `()`).
+- When a plugin/event has **two or more** parameters, **or** any parameter
+  value breaks, each parameter is on its own indented line (**no** trailing
+  comma after the last parameter). A call with one parameter breaks when that
+  parameter's value breaks:
   ```text
   Screen(
     title: "Exemplo",
@@ -115,13 +132,36 @@ Supported string escapes:
   ) {
     …
   }
+
+  VerticalStack(
+    style: (
+      alignment: .leading,
+      spacing: 12
+    )
+  )
   ```
+- An object with **two or more** fields always breaks. Each field is on its
+  own line. The closing `)` aligns with the indent of the line that opened
+  the object (the parameter, or the parent field). Nested objects break at
+  every level that has two or more fields, and a one-field object also breaks
+  when its value breaks:
+  ```text
+  navigationBar: (
+    title: "Feedback",
+    theme: "amber",
+    leading: "back"
+  )
+  ```
+- An object with zero or one field stays compact when that field's value is
+  single-line: `(id: "home")` and `()`.
 - A trailing comma after the last parameter is a parse error.
 - A trailing comma after the last object entry is a parse error.
-- `On*` triggers stay compact; other plugins/events with ≥2 params break.
-- Blocks always expand braces with newlines (including empty blocks):
-  `OnTap {\n}` — never `OnTap {}` on one line.
-- Arrays and objects remain inline (`[…]` and `(key: value)`).
+- `On*` triggers stay compact when every parameter value is single-line.
+  A breaking value still breaks the trigger call.
+- Blocks always expand braces with newlines (including empty plugin blocks):
+  `Empty() {\n}` — never `Empty() {}` on one line. An empty trigger is illegal;
+  the printer still expands the braces if one is encoded.
+- Arrays stay inline (`[…]`). Objects use `(…)`.
 - Object keys are printed as identifiers when possible, otherwise as strings.
 - Multiline `@LANG(...)` bodies pretty-print with continuation lines indented to
   the parameter indent; the lexer dedents those lines on re-parse.

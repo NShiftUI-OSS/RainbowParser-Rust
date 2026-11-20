@@ -53,7 +53,7 @@ Concrete Rainbow only — what iOS and Android must parse/print:
 | `@LANG(...)` embedded | Param values only; `JSON`/`YAML`/`XML`/`HTML`/`MARKDOWN` |
 | `@` token | `use` pins and `@LANG(` tagged values |
 | Version lexeme | `1.0.0` (2+ dots); `1.25` remains double |
-| Canonical printer | Uses before nodes; blank between siblings; preserves leading `//`; `≥2` params (or multiline `@LANG`) break; block braces expand; objects use `(…)`; `@LANG` bodies re-indented |
+| Canonical printer | Uses before nodes; blank between siblings; preserves leading `//`; plugins/events always print `Name()`; `≥2` params, a breaking object, or multiline `@LANG` break the call; objects with `≥2` fields (and nested breaking values) break, closing `)` aligned with the opener; one-field objects stay compact; block braces expand; arrays stay inline; `@LANG` bodies re-indented |
 
 ## Plugin / event namespace (tooling)
 
@@ -68,6 +68,9 @@ Plugin and event names share one namespace. Kinds come from **document position*
 - `rainbow validate` / LSP (`analyze_document_name_kinds`):
   - error if a plugin / event / trigger / `use` name is not UpperCamelCase ASCII letters
   - error if the same name is used in both plugin and event positions
+  - error `rainbow.semantic.missingConstructor` if a concrete plugin or event call has no `()`
+  - error `rainbow.semantic.emptyTrigger` if an `On*` trigger has no children
+- These two checks are semantic. `decode` / format still accept the text so the printer can emit `Name()`. Mobile parsers stay syntax-only and mirror the canonical printer; they do not grow a NShiftUI name registry.
 - Optional registry JSON for backends without a document tree: `{ "plugins": [...], "events": [...] }` via `rainbow validate-registry` / `rainbow.registryPath`.
 - Runtime authority: iOS `NShiftRegisteredVersionCatalog` (fatal on dual registration).
 - Diagnostic code: `rainbow.semantic.nameKindConflict`
