@@ -107,10 +107,16 @@ cargo run -p rainbow-cli -- expand --map fixtures/templates/example.map.json fix
 cargo run -p rainbow-cli -- validate-registry fixtures/registry/valid.registry.json
 cargo run -p rainbow-cli -- install --list
 cargo run -p rainbow-cli -- doctor
+cargo run -p rainbow-cli -- demo
 ```
 
 CLI UX: colored ✓/✗ feedback on TTY (`NO_COLOR` / `FORCE_COLOR` respected),
 `rainbow doctor` for environment checks, and step-based `rainbow install`.
+
+`rainbow demo` downloads tag `0.1.0` of
+[NShiftUI-OSS/NShiftUI-Demo](https://github.com/NShiftUI-OSS/NShiftUI-Demo)
+into `~/Library/Application Support/rainbow/demo` on macOS. The demonstration
+is not part of `brew install rainbow`.
 
 
 ### VS Code / Cursor extension (development)

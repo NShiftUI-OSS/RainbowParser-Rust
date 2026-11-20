@@ -1,3 +1,4 @@
+mod demo;
 mod doctor;
 mod install;
 mod style;
@@ -55,6 +56,7 @@ fn run(args: Vec<String>) -> Result<ExitCode, String> {
         "expand" => command_expand(&args[1..]),
         "install" => install::command_install(&args[1..]),
         "doctor" => doctor::command_doctor(&args[1..]),
+        "demo" => demo::command_demo(&args[1..]),
         other => Err(format!("Unknown command '{other}'.\n\n{}", usage())),
     }
 }
@@ -425,6 +427,7 @@ Rainbow DSL toolkit — parse, format, validate, and set up editors.
 {}
   install    Install editor extension (Cursor / VS Code)
   doctor     Check CLI, LSP, editors, and settings
+  demo       Download the NShiftUI demonstration
 
 {}
   -h, --help       Show help
@@ -437,6 +440,7 @@ Rainbow DSL toolkit — parse, format, validate, and set up editors.
   rainbow format home.rbw
   rainbow install cursor
   rainbow doctor
+  rainbow demo
 
 {}
   Colors respect TTY, NO_COLOR, and FORCE_COLOR.
