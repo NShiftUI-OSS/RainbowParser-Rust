@@ -140,6 +140,13 @@ Unversioned `use Name` is not allowed; use `use Name@1.0.0` or template `use #{N
 
         let mut anchor = self.previous_end_line();
         let block = if self.check(TokenPredicate::LeftBrace) {
+            if had_parentheses && parameters.is_empty() {
+                self.diagnostics.push(RainbowDiagnostic::error(
+                    "rainbow.parser.emptyConstructorBlock",
+                    "A children block does not take empty parentheses. Write the name and '{', not '()'.",
+                    self.previous().range,
+                ));
+            }
             if self.peek_line() != anchor {
                 let message = if had_parentheses {
                     "The children block must open on the same line as ')'."

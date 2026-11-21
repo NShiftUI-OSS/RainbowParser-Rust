@@ -72,7 +72,9 @@ impl RainbowPrinter<'_> {
         let mut header = indent.clone();
         header.push_str(&node.name.render());
 
-        if !node.parameters.is_empty() || should_emit_constructor(node) {
+        if !node.parameters.is_empty()
+            || (node.block.is_none() && should_emit_constructor(node))
+        {
             if should_break_parameters(node) {
                 header.push('(');
                 parts.push(header);
@@ -360,7 +362,9 @@ impl RainbowPrinter<'_> {
     }
 }
 
-/// Plugins and events are always constructors. Triggers and `#{Name}` holes are not.
+/// A plugin or event with no children block prints `Name()`, even with no
+/// parameters. A children block with no parameters prints `Name {`, never
+/// `Name() {`. Triggers and `#{Name}` holes are not constructors.
 fn should_emit_constructor(node: &RainbowNode) -> bool {
     match &node.name {
         RainbowName::Placeholder(_) => false,

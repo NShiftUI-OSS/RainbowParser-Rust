@@ -241,8 +241,8 @@ fn parser_decodes_all_supported_value_shapes() {
 fn parser_preserves_empty_arguments_and_blocks() {
     let document = decode(
         r#"
-        Root() {
-          EmptyBlock() {}
+        Root {
+          EmptyBlock {}
           Leaf
         }
         "#,
@@ -522,8 +522,23 @@ fn plugin_with_children_may_omit_empty_parentheses() {
         "#,
     )
     .expect("format");
-    assert!(formatted.contains("Screen() {"));
-    assert!(formatted.contains("Card() {"));
+    assert!(formatted.contains("Screen {"));
+    assert!(formatted.contains("Card {"));
+    assert!(!formatted.contains("Screen()"));
+    assert!(!formatted.contains("Card()"));
+
+    let empty = validate_source(
+        r#"
+        Screen() {
+          Text(text: "A")
+        }
+        "#,
+    )
+    .expect_err("empty parentheses before a children block");
+    assert_eq!(
+        empty.diagnostics[0].code,
+        "rainbow.parser.emptyConstructorBlock"
+    );
 
     let broken = validate_source("Screen\n{\n  Text(text: \"A\")\n}\n")
         .expect_err("the brace stays on the name line");
@@ -537,7 +552,7 @@ fn plugin_with_children_may_omit_empty_parentheses() {
 fn validate_rejects_plugin_and_event_without_constructor() {
     let error = validate_source(
         r#"
-        Screen() {
+        Screen {
           Spinner
         }
         .events {
@@ -680,7 +695,7 @@ fn printer_uses_custom_format_style() {
 
     assert_eq!(
         rainbow_parser::format_document(&document, &style),
-        "Root() {\r\n    Child()\r\n}"
+        "Root {\r\n    Child()\r\n}"
     );
 }
 
@@ -755,7 +770,7 @@ fn name_registry_rejects_shared_plugin_and_event_names() {
 fn validate_source_allows_distinct_plugin_and_event_positions() {
     let document = rainbow_parser::validate_source(
         r#"
-        Screen() {
+        Screen {
           Button()
           .events {
             OnTap {
@@ -818,7 +833,7 @@ fn is_upper_camel_case_name_matches_macro_rules() {
 fn validate_source_rejects_lowercase_plugin_name() {
     let error = rainbow_parser::validate_source(
         r#"
-        Screen() {
+        Screen {
           dasdadsa()
         }
         "#,
@@ -837,7 +852,7 @@ fn validate_source_rejects_lowercase_plugin_name() {
 
 #[test]
 fn validate_source_rejects_lowercase_use_pin_name() {
-    let error = rainbow_parser::validate_source("use screen@1.0.0\nScreen() {}")
+    let error = rainbow_parser::validate_source("use screen@1.0.0\nScreen {}")
         .expect_err("lowercase use pin should fail");
 
     assert!(error.diagnostics.iter().any(|diagnostic| diagnostic.code
@@ -861,7 +876,7 @@ fn parser_decodes_template_use_and_placeholders() {
         r#"
         use Screen@1.0.0
         use #{UsePin}
-        Screen() {
+        Screen {
           #{PlaceholderPluginName}
           Button(state: #{PlaceholderParamName})
         }
@@ -889,7 +904,7 @@ fn expand_placeholders_replaces_every_occurrence() {
         r#"
 use Screen@1.0.0
 use #{UsePin}
-Screen() {
+Screen {
   #{PlaceholderPluginName}()
   Button(state: #{PlaceholderParamName})
 }
@@ -927,7 +942,7 @@ fn validate_source_allows_template_placeholders() {
     validate_source(
         r#"
         use #{UsePin}
-        Screen() {
+        Screen {
           #{PlaceholderPluginName}
         }
         "#,
@@ -1100,7 +1115,7 @@ fn format_preserves_leading_comments_and_blank_siblings() {
         r#"
 use Screen@1.0.0
 // root comment
-Screen() {
+Screen {
   Text(text: "a")
   // between plugins
   Button(title: "b")
@@ -1109,7 +1124,7 @@ Screen() {
     )
     .expect("format");
 
-    assert!(formatted.contains("use Screen@1.0.0\n\n// root comment\nScreen() {"));
+    assert!(formatted.contains("use Screen@1.0.0\n\n// root comment\nScreen {"));
     assert!(formatted.contains("Text(text: \"a\")\n\n  // between plugins\n  Button(title: \"b\")"));
 }
 

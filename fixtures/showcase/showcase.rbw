@@ -72,6 +72,6 @@ Hello **world**),
 
   EmptyArgs()
 
-  EmptyBlock() {
+  EmptyBlock {
   }
 }

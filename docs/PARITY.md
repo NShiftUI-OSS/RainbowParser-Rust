@@ -68,7 +68,8 @@ Plugin and event names share one namespace. Kinds come from **document position*
 - `rainbow validate` / LSP (`analyze_document_name_kinds`):
   - error if a plugin / event / trigger / `use` name is not UpperCamelCase ASCII letters
   - error if the same name is used in both plugin and event positions
-  - error `rainbow.semantic.missingConstructor` if a concrete plugin or event call has no `()` and no children block. A plugin may omit `()` when `{` opens on the same line as the name (`Card { Text() }`).
+  - error `rainbow.semantic.missingConstructor` if a concrete plugin or event call has no `()` and no children block
+  - error `rainbow.parser.emptyConstructorBlock` if a children block is written as `Name() {`. Write `Name {` when there are no parameters
   - error `rainbow.semantic.emptyTrigger` if an `On*` trigger has no children
 - These two checks are semantic. `decode` / format still accept the text so the printer can emit `Name()`. Mobile parsers stay syntax-only and mirror the canonical printer; they do not grow a NShiftUI name registry.
 - Optional registry JSON for backends without a document tree: `{ "plugins": [...], "events": [...] }` via `rainbow validate-registry` / `rainbow.registryPath`.

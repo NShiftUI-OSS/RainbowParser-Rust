@@ -82,15 +82,16 @@ Notes:
   constructor. The argument list is required even when it is empty: `Spinner()`
   and `Navigate()`, never `Spinner` or `Navigate`. A missing `()` is
   `rainbow.semantic.missingConstructor`.
-  A plugin that opens a children block may omit the empty argument list.
-  `Card { Text() }` and `Card() { Text() }` are both valid. The `{` stays on
-  the same line as the name, or on the same line as `)` when the call has
-  parentheses. Events do not have children blocks, so they still require `()`.
-  `On*` triggers are not constructors (`OnTap { Navigate() }`).
+  A plugin that opens a children block and has no parameters omits `()`.
+  `VerticalStack { Text() }` is valid. `VerticalStack() { Text() }` is
+  `rainbow.parser.emptyConstructorBlock`. When the call has parameters, `()`
+  stays and `{` is on the same line as `)`. Without parameters, `{` is on the
+  same line as the name. Events do not have children blocks, so they still
+  require `()`. `On*` triggers are not constructors (`OnTap { Navigate() }`).
 - A trigger exists to hold actions. It must contain at least one child.
   `OnTap { }` and a bare `OnTap` are `rainbow.semantic.emptyTrigger`.
   A trigger with one or more events is valid. Empty `{}` blocks on plugins
-  stay legal (`Empty() { }`).
+  stay legal (`Empty { }`).
 - `#{Name}` holes skip the constructor check until expand. When the map value
   is only a plugin or event name, write the call in the template:
   `#{Plugin}()` → `PromoBanner()`. A substitution that is already a full call
@@ -172,7 +173,7 @@ Supported string escapes:
 - `On*` triggers stay compact when every parameter value is single-line.
   A breaking value still breaks the trigger call.
 - Blocks always expand braces with newlines (including empty plugin blocks):
-  `Empty() {\n}` — never `Empty() {}` on one line. An empty trigger is illegal;
+  `Empty {\n}` — never `Empty {}` on one line. An empty trigger is illegal;
   the printer still expands the braces if one is encoded.
 - Arrays stay inline (`[…]`). Objects use `(…)`.
 - Object keys are printed as identifiers when possible, otherwise as strings.

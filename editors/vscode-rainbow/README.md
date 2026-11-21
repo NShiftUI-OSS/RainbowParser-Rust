@@ -15,13 +15,16 @@ wraps `rainbow-parser` (kept in parity with the iOS Swift parser).
 - Format Document / format on save (canonical printer):
   - 1 scalar param stays inline; **≥2 params**, a breaking object, or multiline `@LANG` break one-per-line (no trailing comma)
   - objects with **≥2 fields** break; the closing `)` aligns with the parameter or parent field; a one-field object stays compact
-  - plugins and events always format as constructors (`Spinner()`)
+  - plugins and events without a children block format as constructors (`Spinner()`)
+  - a children block with no parameters formats as `Name {`. `Name() {` is reported as `rainbow.parser.emptyConstructorBlock`
   - trailing comma after the last parameter or object field is a parse error
   - blocks always expand `{` / `}` across lines (including empty)
 - Naming checks on `.rbw`:
   - plugin / event / trigger / `use` names must be UpperCamelCase
   - same name cannot be both a plugin (root/body) and an event (under `On*`)
-  - plugin and event calls require `()`; an `On*` trigger with no children is an error
+  - plugin and event calls without a children block require `()`
+  - `Name() {` is `rainbow.parser.emptyConstructorBlock`; write `Name {` when there are no parameters
+  - an `On*` trigger with no children is an error
 - Template placeholders `#{Name}` (use / node / value); backends expand via
   `rainbow expand --map vars.json`
 - Embedded `@LANG(...)` parameter values (raw payload, not a Rainbow string):
