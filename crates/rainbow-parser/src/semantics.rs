@@ -355,7 +355,7 @@ Write {name}()."
     ));
 }
 
-/// `(` after the name, allowing whitespace and `//` line comments between them.
+/// `(` or a children `{` after the name, allowing whitespace and `//` line comments.
 fn call_has_argument_list(source: &str, offset: usize) -> bool {
     let bytes = source.as_bytes();
     let mut index = offset;
@@ -368,7 +368,7 @@ fn call_has_argument_list(source: &str, offset: usize) -> bool {
                     index += 1;
                 }
             }
-            b'(' => return true,
+            b'(' | b'{' => return true,
             _ => return false,
         }
     }

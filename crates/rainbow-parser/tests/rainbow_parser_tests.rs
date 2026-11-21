@@ -500,6 +500,40 @@ fn printer_keeps_single_field_objects_and_scalars_compact() {
 }
 
 #[test]
+fn plugin_with_children_may_omit_empty_parentheses() {
+    validate_source(
+        r#"
+        Screen {
+          Card {
+            Text(text: "A")
+          }
+        }
+        "#,
+    )
+    .expect("a children block does not need empty parentheses");
+
+    let formatted = format_source(
+        r#"
+        Screen {
+          Card {
+            Text(text: "A")
+          }
+        }
+        "#,
+    )
+    .expect("format");
+    assert!(formatted.contains("Screen() {"));
+    assert!(formatted.contains("Card() {"));
+
+    let broken = validate_source("Screen\n{\n  Text(text: \"A\")\n}\n")
+        .expect_err("the brace stays on the name line");
+    assert_eq!(
+        broken.diagnostics[0].code,
+        "rainbow.parser.childrenBrace"
+    );
+}
+
+#[test]
 fn validate_rejects_plugin_and_event_without_constructor() {
     let error = validate_source(
         r#"

@@ -78,9 +78,14 @@ Notes:
 - Plugin, event, trigger, and concrete `use` pin names must be **UpperCamelCase** ASCII
   letters only (e.g. `Screen`, `OnTap`, `SendHTTPRequest`). Parameter names,
   enum values (`.name`), and placeholder keys are not constrained by this rule.
-- Every concrete **plugin** and **event** call is a constructor. The argument
-  list is required even when it is empty: `Spinner()` and `Navigate()`, never
-  `Spinner` or `Navigate`. A missing `()` is `rainbow.semantic.missingConstructor`.
+- Every concrete **plugin** and **event** call without a children block is a
+  constructor. The argument list is required even when it is empty: `Spinner()`
+  and `Navigate()`, never `Spinner` or `Navigate`. A missing `()` is
+  `rainbow.semantic.missingConstructor`.
+  A plugin that opens a children block may omit the empty argument list.
+  `Card { Text() }` and `Card() { Text() }` are both valid. The `{` stays on
+  the same line as the name, or on the same line as `)` when the call has
+  parentheses. Events do not have children blocks, so they still require `()`.
   `On*` triggers are not constructors (`OnTap { Navigate() }`).
 - A trigger exists to hold actions. It must contain at least one child.
   `OnTap { }` and a bare `OnTap` are `rainbow.semantic.emptyTrigger`.

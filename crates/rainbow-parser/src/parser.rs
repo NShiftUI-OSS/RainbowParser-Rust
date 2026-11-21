@@ -140,17 +140,15 @@ Unversioned `use Name` is not allowed; use `use Name@1.0.0` or template `use #{N
 
         let mut anchor = self.previous_end_line();
         let block = if self.check(TokenPredicate::LeftBrace) {
-            if !had_parentheses {
-                self.diagnostics.push(RainbowDiagnostic::error(
-                    "rainbow.parser.childrenBrace",
-                    "A children block belongs after '()', on the same line as ')'.",
-                    self.peek().range,
-                ));
-            }
             if self.peek_line() != anchor {
+                let message = if had_parentheses {
+                    "The children block must open on the same line as ')'."
+                } else {
+                    "The children block must open on the same line as the name."
+                };
                 self.diagnostics.push(RainbowDiagnostic::error(
                     "rainbow.parser.childrenBrace",
-                    "The children block must open on the same line as ')'.",
+                    message,
                     self.peek().range,
                 ));
             }
