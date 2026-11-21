@@ -51,7 +51,8 @@ Hello **world**),
     title: "Entrar",
     variant: .primary,
     loading: false
-  ) {
+  )
+  .events {
     OnTap {
       Navigate(to: "Dashboard")
 

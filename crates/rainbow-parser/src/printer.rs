@@ -108,27 +108,92 @@ impl RainbowPrinter<'_> {
             parts.push(header);
         }
 
-        let Some(block) = &node.block else {
-            return parts.join(&self.style.newline);
-        };
-
-        if let Some(last) = parts.last_mut() {
-            last.push_str(" {");
-        }
-        if block.children.is_empty() {
-            parts.push(format!("{indent}}}"));
-        } else {
-            let children = block
-                .children
-                .iter()
-                .map(|child| self.print_node(child, level + 1))
-                .collect::<Vec<_>>()
-                .join(&format!("{n}{n}", n = self.style.newline));
-            parts.push(children);
-            parts.push(format!("{indent}}}"));
+        if let Some(block) = &node.block {
+            if let Some(last) = parts.last_mut() {
+                last.push_str(" {");
+            }
+            if block.children.is_empty() {
+                parts.push(format!("{indent}}}"));
+            } else {
+                let children = block
+                    .children
+                    .iter()
+                    .map(|child| self.print_node(child, level + 1))
+                    .collect::<Vec<_>>()
+                    .join(&format!("{n}{n}", n = self.style.newline));
+                parts.push(children);
+                parts.push(format!("{indent}}}"));
+            }
         }
 
+        self.push_modifiers(&mut parts, node, level);
         parts.join(&self.style.newline)
+    }
+
+    fn push_modifiers(&self, parts: &mut Vec<String>, node: &RainbowNode, level: usize) {
+        let indent = self.indentation(level);
+        if let Some(id) = &node.id {
+            parts.push(format!("{indent}.id(\"{}\")", escape_rainbow_string(id)));
+        }
+        if !node.style.is_empty() {
+            parts.push(self.print_style_modifier(&node.style, level));
+        }
+        if !node.events.is_empty() {
+            parts.push(format!("{indent}.events {{"));
+            let trigger_indent = self.indentation(level + 1);
+            for trigger in &node.events {
+                self.push_leading(parts, &trigger.leading, level + 1);
+                parts.push(format!("{trigger_indent}{} {{", trigger.name.render()));
+                for event in &trigger.events {
+                    parts.push(self.print_node(event, level + 2));
+                }
+                parts.push(format!("{trigger_indent}}}"));
+            }
+            parts.push(format!("{indent}}}"));
+        }
+        if !node.slots.is_empty() {
+            parts.push(format!("{indent}.slots {{"));
+            let slot_indent = self.indentation(level + 1);
+            for slot in &node.slots {
+                self.push_leading(parts, &slot.leading, level + 1);
+                parts.push(format!("{slot_indent}{} {{", slot.name.render()));
+                for plugin in &slot.plugins {
+                    parts.push(self.print_node(plugin, level + 2));
+                }
+                parts.push(format!("{slot_indent}}}"));
+            }
+            parts.push(format!("{indent}}}"));
+        }
+    }
+
+    fn print_style_modifier(&self, parameters: &[RainbowParameter], level: usize) -> String {
+        let indent = self.indentation(level);
+        let complex = parameters.len() >= 2 || parameters.iter().any(parameter_needs_break);
+        if !complex {
+            let inline = parameters
+                .iter()
+                .map(|parameter| {
+                    self.print_parameter_inline(parameter, &self.indentation(level + 1))
+                })
+                .collect::<Vec<_>>()
+                .join(", ");
+            return format!("{indent}.style({inline})");
+        }
+
+        let mut lines = vec![format!("{indent}.style(")];
+        let inner = self.indentation(level + 1);
+        let last = parameters.len() - 1;
+        for (index, parameter) in parameters.iter().enumerate() {
+            let mut entry = self.print_parameter_lines(parameter, &inner);
+            if index != last {
+                if let Some(last_line) = entry.last_mut() {
+                    last_line.push(',');
+                }
+            }
+            lines.extend(entry);
+        }
+        lines.push(format!("{indent})"));
+        lines.join(&self.style.newline)
     }
 
     fn print_parameter_lines(&self, parameter: &RainbowParameter, indent: &str) -> Vec<String> {
@@ -204,8 +269,29 @@ impl RainbowPrinter<'_> {
                     .join(", ")
             ),
             RainbowValue::Object(entries) => self.print_object(entries, continuation_indent),
+            RainbowValue::Plugins(plugins) => self.print_plugin_list(plugins, continuation_indent),
             RainbowValue::Null => "null".to_string(),
         }
+    }
+
+    fn print_plugin_list(&self, plugins: &[RainbowNode], continuation_indent: &str) -> String {
+        if plugins.is_empty() {
+            return "{}".to_string();
+        }
+        let level = self.level_of(continuation_indent) + 1;
+        let mut lines = vec!["{".to_string()];
+        for plugin in plugins {
+            lines.push(self.print_node(plugin, level));
+        }
+        lines.push(format!("{continuation_indent}}}"));
+        lines.join(&self.style.newline)
+    }
+
+    fn level_of(&self, indent: &str) -> usize {
+        if self.style.indentation.is_empty() {
+            return 0;
+        }
+        indent.len() / self.style.indentation.len()
     }
 
     fn print_object(&self, entries: &[RainbowObjectEntry], continuation_indent: &str) -> String {
@@ -308,6 +394,7 @@ fn value_needs_break(value: &RainbowValue) -> bool {
         } => text.contains('\n'),
         RainbowValue::Object(entries) => object_needs_break(entries),
         RainbowValue::Array(values) => values.iter().any(value_needs_break),
+        RainbowValue::Plugins(_) => true,
         _ => false,
     }
 }

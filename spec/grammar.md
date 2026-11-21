@@ -12,12 +12,20 @@ Template holes (`#{Name}`) and `expand` are **backend-only** in this crate.
 Document      = UseDeclaration* Node*
 UseDeclaration = "use" Identifier "@" Version
                | "use" Placeholder
-Node          = NodeName Arguments? Block?
+Node          = NodeName Arguments? Children? Modifier*
 NodeName      = Identifier | Placeholder
 Arguments     = "(" ParameterList? ")"
 ParameterList = Parameter ("," Parameter)*
 Parameter     = Identifier ":" Value
-Block         = "{" Node* "}"
+Children      = "{" Node* "}"
+Modifier      = "." "id" "(" String ")"
+              | "." "style" Arguments
+              | "." "events" "{" Trigger* "}"
+              | "." "slots" "{" Slot* "}"
+Trigger       = NodeName "{" Event* "}"
+Event         = NodeName Arguments? IdModifier?
+Slot          = NodeName "{" Node* "}"
+IdModifier    = "." "id" "(" String ")"
 Value         = String | Number | Bool | EnumIdentifier | Placeholder | TaggedValue | Array | Object | Null
 TaggedValue   = "@" EmbeddedLanguage "(" EmbeddedBody ")"
 EmbeddedLanguage = "JSON" | "YAML" | "XML" | "HTML" | "MARKDOWN"

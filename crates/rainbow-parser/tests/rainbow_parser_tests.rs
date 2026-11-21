@@ -59,7 +59,8 @@ fn parser_decodes_use_declarations_and_nodes() {
         use ShowToast@1.3.0
 
         Screen(name: "Home") {
-          Button(title: "Hi") {
+          Button(title: "Hi")
+          .events {
             OnTap {
               ShowToast(message: "ok")
             }
@@ -161,7 +162,8 @@ fn parser_decodes_nested_rainbow_document() {
     let document = decode(
         r#"
         Screen(name: "Home") {
-          Button(title: "Entrar", variant: .primary) {
+          Button(title: "Entrar", variant: .primary)
+          .events {
             OnTap {
               Navigate(to: "Dashboard")
             }
@@ -171,36 +173,17 @@ fn parser_decodes_nested_rainbow_document() {
     )
     .expect("parse should succeed");
 
+    let screen = &document.nodes[0];
+    assert_eq!(screen.name, "Screen");
+    let button = &screen.children()[0];
+    assert_eq!(button.name, "Button");
+    assert!(button.block.is_none());
+    assert_eq!(button.events.len(), 1);
+    assert_eq!(button.events[0].name, "OnTap");
+    assert_eq!(button.events[0].events[0].name, "Navigate");
     assert_eq!(
-        document,
-        RainbowDocument::new(vec![RainbowNode::with_children(
-            "Screen",
-            vec![RainbowParameter::new(
-                "name",
-                RainbowValue::String("Home".to_string())
-            )],
-            vec![RainbowNode::with_children(
-                "Button",
-                vec![
-                    RainbowParameter::new("title", RainbowValue::String("Entrar".to_string())),
-                    RainbowParameter::new(
-                        "variant",
-                        RainbowValue::Identifier("primary".to_string())
-                    ),
-                ],
-                vec![RainbowNode::with_children(
-                    "OnTap",
-                    vec![],
-                    vec![RainbowNode::with_parameters(
-                        "Navigate",
-                        vec![RainbowParameter::new(
-                            "to",
-                            RainbowValue::String("Dashboard".to_string())
-                        )]
-                    )]
-                )]
-            )]
-        )])
+        button.events[0].events[0].parameters[0].value,
+        RainbowValue::String("Dashboard".to_string())
     );
 }
 
@@ -259,7 +242,7 @@ fn parser_preserves_empty_arguments_and_blocks() {
     let document = decode(
         r#"
         Root() {
-          EmptyBlock {}
+          EmptyBlock() {}
           Leaf
         }
         "#,
@@ -522,6 +505,8 @@ fn validate_rejects_plugin_and_event_without_constructor() {
         r#"
         Screen() {
           Spinner
+        }
+        .events {
           OnTap {
             Navigate
           }
@@ -551,7 +536,8 @@ fn validate_rejects_plugin_and_event_without_constructor() {
 fn validate_rejects_empty_trigger_and_allows_one_event() {
     let empty = validate_source(
         r#"
-        Screen() {
+        Screen()
+        .events {
           OnTap {
           }
         }
@@ -564,17 +550,21 @@ fn validate_rejects_empty_trigger_and_allows_one_event() {
     assert!(empty.diagnostics[0].message.contains("at least one event"));
 
     let bare = validate_source("OnTap").expect_err("trigger without a block should fail");
-    assert_eq!(bare.diagnostics[0].code, "rainbow.semantic.emptyTrigger");
+    assert_eq!(
+        bare.diagnostics[0].code,
+        "rainbow.semantic.triggerInChildren"
+    );
 
     validate_source(
         r#"
-        Screen() {
+        Screen()
+        .events {
           OnTap {
             Navigate()
           }
-          Spinner()
-          Separator()
         }
+        Spinner()
+        Separator()
         "#,
     )
     .expect("trigger with an event should validate");
@@ -662,7 +652,7 @@ fn printer_uses_custom_format_style() {
 
 #[test]
 fn canonical_round_trip_preserves_structure() {
-    let source = r#"Button( title:"Entrar", meta:(id:"login") ){OnTap{Navigate(to:"Home")}}"#;
+    let source = "Button( title:\"Entrar\", meta:(id:\"login\") )\n.events {\n  OnTap {\n    Navigate(to:\"Home\")\n  }\n}";
     let first_document = decode(source).expect("first parse should succeed");
     let encoded = encode(&first_document);
     let second_document = decode(&encoded).expect("second parse should succeed");
@@ -670,14 +660,7 @@ fn canonical_round_trip_preserves_structure() {
     assert_eq!(second_document, first_document);
     assert_eq!(
         encoded,
-        r#"Button(
-  title: "Entrar",
-  meta: (id: "login")
-) {
-  OnTap {
-    Navigate(to: "Home")
-  }
-}"#
+        "Button(\n  title: \"Entrar\",\n  meta: (id: \"login\")\n)\n.events {\n  OnTap {\n    Navigate(to: \"Home\")\n  }\n}"
     );
 }
 
@@ -739,7 +722,8 @@ fn validate_source_allows_distinct_plugin_and_event_positions() {
     let document = rainbow_parser::validate_source(
         r#"
         Screen() {
-          Button() {
+          Button()
+          .events {
             OnTap {
               Navigate(to: "Home")
             }
@@ -756,7 +740,8 @@ fn validate_source_allows_distinct_plugin_and_event_positions() {
 fn validate_source_rejects_same_name_in_plugin_and_event_positions() {
     let error = rainbow_parser::validate_source(
         r#"
-        Foo() {
+        Foo()
+        .events {
           OnTap {
             Foo(to: "Home")
           }
@@ -842,7 +827,7 @@ fn parser_decodes_template_use_and_placeholders() {
         r#"
         use Screen@1.0.0
         use #{UsePin}
-        Screen {
+        Screen() {
           #{PlaceholderPluginName}
           Button(state: #{PlaceholderParamName})
         }

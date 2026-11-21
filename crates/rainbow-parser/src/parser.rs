@@ -1,6 +1,7 @@
 use crate::ast::{
     RainbowBlock, RainbowDocument, RainbowLeadingTrivia, RainbowName, RainbowNode,
-    RainbowObjectEntry, RainbowParameter, RainbowUseDeclaration, RainbowValue,
+    RainbowObjectEntry, RainbowParameter, RainbowSlot, RainbowTrigger, RainbowUseDeclaration,
+    RainbowValue,
 };
 use crate::diagnostics::{RainbowDiagnostic, RainbowParseError};
 use crate::lexer::{RainbowToken, RainbowTokenKind};
@@ -130,24 +131,312 @@ Unversioned `use Name` is not allowed; use `use Name@1.0.0` or template `use #{N
         };
         self.advance();
 
-        let parameters = if self.match_kind(TokenPredicate::LeftParen) {
+        let had_parentheses = self.match_kind(TokenPredicate::LeftParen);
+        let parameters = if had_parentheses {
             self.parse_arguments()
         } else {
             Vec::new()
         };
 
-        let block = if self.match_kind(TokenPredicate::LeftBrace) {
-            Some(self.parse_block())
+        let mut anchor = self.previous_end_line();
+        let block = if self.check(TokenPredicate::LeftBrace) {
+            if !had_parentheses {
+                self.diagnostics.push(RainbowDiagnostic::error(
+                    "rainbow.parser.childrenBrace",
+                    "A children block belongs after '()', on the same line as ')'.",
+                    self.peek().range,
+                ));
+            }
+            if self.peek_line() != anchor {
+                self.diagnostics.push(RainbowDiagnostic::error(
+                    "rainbow.parser.childrenBrace",
+                    "The children block must open on the same line as ')'.",
+                    self.peek().range,
+                ));
+            }
+            self.advance();
+            let block = self.parse_block();
+            anchor = self.previous_end_line();
+            Some(block)
         } else {
             None
         };
 
-        Some(RainbowNode {
+        let mut node = RainbowNode {
             name,
             parameters,
             block,
             leading: RainbowLeadingTrivia::default(),
+            id: None,
+            style: Vec::new(),
+            events: Vec::new(),
+            slots: Vec::new(),
+        };
+        self.parse_modifiers(&mut node, anchor);
+        Some(node)
+    }
+
+    /// View modifiers stay on the line immediately below the call or the previous modifier.
+    fn parse_modifiers(&mut self, node: &mut RainbowNode, mut anchor: usize) {
+        let mut seen = Vec::new();
+        loop {
+            if matches!(self.peek().kind, RainbowTokenKind::Comment(_)) {
+                if self.comment_introduces_modifier() {
+                    self.diagnostics.push(RainbowDiagnostic::error(
+                        "rainbow.parser.modifierSpacing",
+                        "A comment cannot sit between a plugin and its view modifier.",
+                        self.peek().range,
+                    ));
+                    self.advance();
+                    continue;
+                }
+                break;
+            }
+
+            let RainbowTokenKind::DotIdentifier(modifier) = &self.peek().kind else {
+                break;
+            };
+            let modifier = modifier.clone();
+            let line = self.peek_line();
+            if !matches!(modifier.as_str(), "id" | "style" | "events" | "slots") {
+                if line <= anchor.saturating_add(1) {
+                    self.diagnostics.push(RainbowDiagnostic::error(
+                        "rainbow.parser.unknownModifier",
+                        format!("Unknown view modifier '.{modifier}'."),
+                        self.peek().range,
+                    ));
+                    self.advance();
+                    continue;
+                }
+                break;
+            }
+
+            if line == anchor {
+                self.diagnostics.push(RainbowDiagnostic::error(
+                    "rainbow.parser.modifierSpacing",
+                    format!("'.{modifier}' must start on the line below the plugin."),
+                    self.peek().range,
+                ));
+            } else if line > anchor.saturating_add(1) {
+                self.diagnostics.push(RainbowDiagnostic::error(
+                    "rainbow.parser.modifierSpacing",
+                    format!("'.{modifier}' must be on the next line, with no blank line above it."),
+                    self.peek().range,
+                ));
+            }
+
+            if seen.contains(&modifier) {
+                self.diagnostics.push(RainbowDiagnostic::error(
+                    "rainbow.parser.duplicateModifier",
+                    format!("'.{modifier}' can be written only once on a plugin."),
+                    self.peek().range,
+                ));
+            }
+            seen.push(modifier.clone());
+            self.advance();
+
+            match modifier.as_str() {
+                "id" => node.id = self.parse_id_modifier(),
+                "style" => node.style = self.parse_style_modifier(),
+                "events" => node.events = self.parse_events_modifier(),
+                "slots" => node.slots = self.parse_slots_modifier(),
+                _ => {}
+            }
+            anchor = self.previous_end_line();
+        }
+    }
+
+    fn parse_id_modifier(&mut self) -> Option<String> {
+        self.consume(TokenPredicate::LeftParen, "Expected '(' after '.id'.");
+        let id = match &self.peek().kind {
+            RainbowTokenKind::String(value) => {
+                let value = value.clone();
+                self.advance();
+                Some(value)
+            }
+            _ => {
+                self.append_unexpected_token("Expected a string inside '.id(\"...\")'.");
+                None
+            }
+        };
+        self.consume(TokenPredicate::RightParen, "Expected ')' after '.id'.");
+        id
+    }
+
+    fn parse_style_modifier(&mut self) -> Vec<RainbowParameter> {
+        if !self.match_kind(TokenPredicate::LeftParen) {
+            self.append_unexpected_token("Expected '(' after '.style'.");
+            return Vec::new();
+        }
+        self.parse_arguments()
+    }
+
+    fn parse_events_modifier(&mut self) -> Vec<RainbowTrigger> {
+        if !self.brace_on_same_line("'.events'") {
+            return Vec::new();
+        }
+        self.advance();
+        let mut triggers = Vec::new();
+        while !self.significant_is(TokenPredicate::RightBrace) && !self.is_at_end() {
+            let leading = self.take_leading_trivia();
+            if let Some(mut trigger) = self.parse_trigger() {
+                trigger.leading = leading;
+                triggers.push(trigger);
+            } else {
+                self.synchronize_node();
+            }
+        }
+        let _ = self.take_leading_trivia();
+        self.consume(TokenPredicate::RightBrace, "Expected '}' after '.events'.");
+        triggers
+    }
+
+    fn parse_trigger(&mut self) -> Option<RainbowTrigger> {
+        let name = match &self.peek().kind {
+            RainbowTokenKind::Identifier(name) => RainbowName::ident(name.clone()),
+            _ => {
+                self.append_unexpected_token("Expected a trigger name inside '.events'.");
+                return None;
+            }
+        };
+        self.advance();
+        if self.check(TokenPredicate::LeftParen) {
+            self.advance();
+            let _ = self.parse_arguments();
+        }
+        if !self.brace_on_same_line("a trigger") {
+            return None;
+        }
+        self.advance();
+        let events = self.parse_event_calls();
+        Some(RainbowTrigger {
+            name,
+            events,
+            leading: RainbowLeadingTrivia::default(),
         })
+    }
+
+    fn parse_event_calls(&mut self) -> Vec<RainbowNode> {
+        let mut events = Vec::new();
+        while !self.significant_is(TokenPredicate::RightBrace) && !self.is_at_end() {
+            let leading = self.take_leading_trivia();
+            if let Some(mut event) = self.parse_node() {
+                event.leading = leading;
+                if event.block.is_some()
+                    || !event.style.is_empty()
+                    || !event.events.is_empty()
+                    || !event.slots.is_empty()
+                {
+                    self.diagnostics.push(RainbowDiagnostic::error(
+                        "rainbow.parser.eventShape",
+                        "An event only accepts metadata in parentheses and an optional '.id'.",
+                        self.previous().range,
+                    ));
+                }
+                events.push(event);
+            } else {
+                self.synchronize_node();
+            }
+        }
+        let _ = self.take_leading_trivia();
+        self.consume(TokenPredicate::RightBrace, "Expected '}' after trigger.");
+        events
+    }
+
+    fn parse_slots_modifier(&mut self) -> Vec<RainbowSlot> {
+        if !self.brace_on_same_line("'.slots'") {
+            return Vec::new();
+        }
+        self.advance();
+        let mut slots = Vec::new();
+        while !self.significant_is(TokenPredicate::RightBrace) && !self.is_at_end() {
+            let leading = self.take_leading_trivia();
+            if let Some(mut slot) = self.parse_slot() {
+                slot.leading = leading;
+                slots.push(slot);
+            } else {
+                self.synchronize_node();
+            }
+        }
+        let _ = self.take_leading_trivia();
+        self.consume(TokenPredicate::RightBrace, "Expected '}' after '.slots'.");
+        slots
+    }
+
+    fn parse_slot(&mut self) -> Option<RainbowSlot> {
+        let name = match &self.peek().kind {
+            RainbowTokenKind::Identifier(name) => RainbowName::ident(name.clone()),
+            _ => {
+                self.append_unexpected_token("Expected a slot name inside '.slots'.");
+                return None;
+            }
+        };
+        self.advance();
+        if !self.brace_on_same_line("a slot") {
+            return None;
+        }
+        self.advance();
+        let plugins = self.parse_plugin_list();
+        Some(RainbowSlot {
+            name,
+            plugins,
+            leading: RainbowLeadingTrivia::default(),
+        })
+    }
+
+    fn parse_plugin_list(&mut self) -> Vec<RainbowNode> {
+        let mut plugins = Vec::new();
+        while !self.significant_is(TokenPredicate::RightBrace) && !self.is_at_end() {
+            let leading = self.take_leading_trivia();
+            if let Some(mut plugin) = self.parse_node() {
+                plugin.leading = leading;
+                plugins.push(plugin);
+            } else {
+                self.synchronize_node();
+            }
+        }
+        let _ = self.take_leading_trivia();
+        self.consume(TokenPredicate::RightBrace, "Expected '}' after plugins.");
+        plugins
+    }
+
+    fn brace_on_same_line(&mut self, what: &str) -> bool {
+        if !self.check(TokenPredicate::LeftBrace) {
+            self.append_unexpected_token(format!("Expected '{{' on the same line as {what}."));
+            return false;
+        }
+        if self.peek_line() != self.previous_end_line() {
+            self.diagnostics.push(RainbowDiagnostic::error(
+                "rainbow.parser.braceLine",
+                format!("The '{{' of {what} must stay on the same line as its name."),
+                self.peek().range,
+            ));
+        }
+        true
+    }
+
+    fn comment_introduces_modifier(&self) -> bool {
+        let mut index = self.current;
+        while let Some(token) = self.tokens.get(index) {
+            match &token.kind {
+                RainbowTokenKind::Comment(_) => index += 1,
+                RainbowTokenKind::DotIdentifier(name)
+                    if matches!(name.as_str(), "id" | "style" | "events" | "slots") =>
+                {
+                    return true;
+                }
+                _ => return false,
+            }
+        }
+        false
+    }
+
+    fn peek_line(&self) -> usize {
+        self.peek().range.start.line
+    }
+
+    fn previous_end_line(&self) -> usize {
+        self.previous().range.end.line
     }
 
     fn parse_arguments(&mut self) -> Vec<RainbowParameter> {
@@ -301,6 +590,10 @@ Unversioned `use Name` is not allowed; use `use Name@1.0.0` or template `use #{N
             RainbowTokenKind::LeftParen => {
                 self.advance();
                 Some(self.parse_object())
+            }
+            RainbowTokenKind::LeftBrace => {
+                self.advance();
+                Some(RainbowValue::Plugins(self.parse_plugin_list()))
             }
             _ => {
                 self.append_unexpected_token("Expected value.");

@@ -142,8 +142,53 @@ fn node_to_json(node: &RainbowNode) -> String {
         })
         .unwrap_or_else(|| "null".to_string());
 
+    let id = node
+        .id
+        .as_ref()
+        .map(|id| json_string(id))
+        .unwrap_or_else(|| "null".to_string());
+    let style = node
+        .style
+        .iter()
+        .map(parameter_to_json)
+        .collect::<Vec<_>>()
+        .join(",");
+    let events = node
+        .events
+        .iter()
+        .map(|trigger| {
+            format!(
+                "{{\"name\":{},\"events\":[{}]}}",
+                name_to_json(&trigger.name),
+                trigger
+                    .events
+                    .iter()
+                    .map(node_to_json)
+                    .collect::<Vec<_>>()
+                    .join(",")
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(",");
+    let slots = node
+        .slots
+        .iter()
+        .map(|slot| {
+            format!(
+                "{{\"name\":{},\"plugins\":[{}]}}",
+                name_to_json(&slot.name),
+                slot.plugins
+                    .iter()
+                    .map(node_to_json)
+                    .collect::<Vec<_>>()
+                    .join(",")
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(",");
+
     format!(
-        "{{\"name\":{},\"parameters\":[{}],\"block\":{},\"leading\":{}}}",
+        "{{\"name\":{},\"parameters\":[{}],\"block\":{},\"id\":{id},\"style\":[{style}],\"events\":[{events}],\"slots\":[{slots}],\"leading\":{}}}",
         name_to_json(&node.name),
         node.parameters
             .iter()
@@ -218,6 +263,14 @@ fn value_to_json(value: &RainbowValue) -> String {
             entries
                 .iter()
                 .map(object_entry_to_json)
+                .collect::<Vec<_>>()
+                .join(",")
+        ),
+        RainbowValue::Plugins(plugins) => format!(
+            "{{\"kind\":\"plugins\",\"plugins\":[{}]}}",
+            plugins
+                .iter()
+                .map(node_to_json)
                 .collect::<Vec<_>>()
                 .join(",")
         ),

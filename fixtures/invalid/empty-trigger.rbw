@@ -1,5 +1,5 @@
-Screen() {
+Screen()
+.events {
   OnTap {
   }
-  OnSuccess
 }

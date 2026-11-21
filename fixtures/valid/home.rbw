@@ -1,8 +1,8 @@
 Screen(name: "Home") {
-  Button(title: "Entrar", variant: .primary) {
+  Button(title: "Entrar", variant: .primary)
+  .events {
     OnTap {
       Navigate(to: "Dashboard")
     }
   }
 }
-

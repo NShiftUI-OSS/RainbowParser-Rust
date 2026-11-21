@@ -160,44 +160,26 @@ fn walk_node(
             }
             return;
         }
-        RainbowName::Ident(name) if is_trigger_node_name(name) => {
-            let skip = bump_name_occurrence(name_occurrences, name);
-            let range =
-                next_identifier_range(source, name, skip).unwrap_or_else(|| document_range(source));
-            push_casing_diagnostic(diagnostics, name, "trigger", range);
-            if node.children().is_empty() {
-                diagnostics.push(RainbowDiagnostic::error(
-                    "rainbow.semantic.emptyTrigger",
-                    format!(
-                        "Trigger \"{name}\" must contain at least one event. \
-An empty trigger does not run any action."
-                    ),
-                    range,
-                ));
-            }
-
-            for child in children {
-                walk_node(
-                    child,
-                    KindContext::EventBody,
-                    source,
-                    plugin_uses,
-                    event_uses,
-                    name_occurrences,
-                    diagnostics,
-                );
-            }
-            return;
-        }
         RainbowName::Ident(_) => {}
     }
 
     match context {
         KindContext::PluginBody => {
             if let RainbowName::Ident(name) = &node.name {
-                let range = record_use(plugin_uses, name, source, name_occurrences);
-                push_casing_diagnostic(diagnostics, name, "plugin", range);
-                push_constructor_diagnostic(diagnostics, source, name, "Plugin", range);
+                if is_trigger_node_name(name) {
+                    let range = record_use(plugin_uses, name, source, name_occurrences);
+                    diagnostics.push(RainbowDiagnostic::error(
+                        "rainbow.semantic.triggerInChildren",
+                        format!(
+                            "Trigger \"{name}\" belongs in '.events', not in the children block."
+                        ),
+                        range,
+                    ));
+                } else {
+                    let range = record_use(plugin_uses, name, source, name_occurrences);
+                    push_casing_diagnostic(diagnostics, name, "plugin", range);
+                    push_constructor_diagnostic(diagnostics, source, name, "Plugin", range);
+                }
             }
             for child in children {
                 walk_node(
@@ -210,12 +192,82 @@ An empty trigger does not run any action."
                     diagnostics,
                 );
             }
+            for parameter in &node.parameters {
+                walk_value(
+                    &parameter.value,
+                    source,
+                    plugin_uses,
+                    event_uses,
+                    name_occurrences,
+                    diagnostics,
+                );
+            }
+            for parameter in &node.style {
+                walk_value(
+                    &parameter.value,
+                    source,
+                    plugin_uses,
+                    event_uses,
+                    name_occurrences,
+                    diagnostics,
+                );
+            }
+            for trigger in &node.events {
+                if let RainbowName::Ident(name) = &trigger.name {
+                    let range = record_use(plugin_uses, name, source, name_occurrences);
+                    push_casing_diagnostic(diagnostics, name, "trigger", range);
+                    if trigger.events.is_empty() {
+                        diagnostics.push(RainbowDiagnostic::error(
+                            "rainbow.semantic.emptyTrigger",
+                            format!(
+                                "Trigger \"{name}\" must contain at least one event. \
+An empty trigger does not run any action."
+                            ),
+                            range,
+                        ));
+                    }
+                }
+                for event in &trigger.events {
+                    walk_node(
+                        event,
+                        KindContext::EventBody,
+                        source,
+                        plugin_uses,
+                        event_uses,
+                        name_occurrences,
+                        diagnostics,
+                    );
+                }
+            }
+            for slot in &node.slots {
+                for plugin in &slot.plugins {
+                    walk_node(
+                        plugin,
+                        KindContext::PluginBody,
+                        source,
+                        plugin_uses,
+                        event_uses,
+                        name_occurrences,
+                        diagnostics,
+                    );
+                }
+            }
         }
         KindContext::EventBody => {
             if let RainbowName::Ident(name) = &node.name {
                 let range = record_use(event_uses, name, source, name_occurrences);
                 push_casing_diagnostic(diagnostics, name, "event", range);
                 push_constructor_diagnostic(diagnostics, source, name, "Event", range);
+            }
+            for parameter in &node.parameters {
+                walk_value(
+                    &parameter.value,
+                    source,
+                    plugin_uses,
+                    event_uses,
+                    name_occurrences,
+                    diagnostics,
+                );
             }
             for child in children {
                 walk_node(
@@ -229,6 +281,56 @@ An empty trigger does not run any action."
                 );
             }
         }
+    }
+}
+
+fn walk_value(
+    value: &crate::ast::RainbowValue,
+    source: &str,
+    plugin_uses: &mut BTreeMap<String, Vec<RainbowSourceRange>>,
+    event_uses: &mut BTreeMap<String, Vec<RainbowSourceRange>>,
+    name_occurrences: &mut BTreeMap<String, usize>,
+    diagnostics: &mut Vec<RainbowDiagnostic>,
+) {
+    match value {
+        crate::ast::RainbowValue::Plugins(plugins) => {
+            for plugin in plugins {
+                walk_node(
+                    plugin,
+                    KindContext::PluginBody,
+                    source,
+                    plugin_uses,
+                    event_uses,
+                    name_occurrences,
+                    diagnostics,
+                );
+            }
+        }
+        crate::ast::RainbowValue::Array(values) => {
+            for value in values {
+                walk_value(
+                    value,
+                    source,
+                    plugin_uses,
+                    event_uses,
+                    name_occurrences,
+                    diagnostics,
+                );
+            }
+        }
+        crate::ast::RainbowValue::Object(entries) => {
+            for entry in entries {
+                walk_value(
+                    &entry.value,
+                    source,
+                    plugin_uses,
+                    event_uses,
+                    name_occurrences,
+                    diagnostics,
+                );
+            }
+        }
+        _ => {}
     }
 }
 

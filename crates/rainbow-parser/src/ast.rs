@@ -139,12 +139,34 @@ impl RainbowBlock {
     }
 }
 
+/// One `.events` trigger: `OnTap { Event() }`. The brace stays on the trigger line.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RainbowTrigger {
+    pub name: RainbowName,
+    pub events: Vec<RainbowNode>,
+    pub leading: RainbowLeadingTrivia,
+}
+
+/// One `.slots` entry: `BottomSheets { Sheet() }`. The brace stays on the slot name line.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RainbowSlot {
+    pub name: RainbowName,
+    pub plugins: Vec<RainbowNode>,
+    pub leading: RainbowLeadingTrivia,
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct RainbowNode {
     pub name: RainbowName,
     pub parameters: Vec<RainbowParameter>,
     pub block: Option<RainbowBlock>,
     pub leading: RainbowLeadingTrivia,
+    /// `.id("...")` on the following line. Absent when the call has no `.id`.
+    pub id: Option<String>,
+    /// Named arguments of `.style(...)`. Layout only; typography stays in metadata.
+    pub style: Vec<RainbowParameter>,
+    pub events: Vec<RainbowTrigger>,
+    pub slots: Vec<RainbowSlot>,
 }
 
 impl RainbowNode {
@@ -154,6 +176,10 @@ impl RainbowNode {
             parameters: Vec::new(),
             block: None,
             leading: RainbowLeadingTrivia::default(),
+            id: None,
+            style: Vec::new(),
+            events: Vec::new(),
+            slots: Vec::new(),
         }
     }
 
@@ -166,6 +192,10 @@ impl RainbowNode {
             parameters,
             block: None,
             leading: RainbowLeadingTrivia::default(),
+            id: None,
+            style: Vec::new(),
+            events: Vec::new(),
+            slots: Vec::new(),
         }
     }
 
@@ -179,6 +209,10 @@ impl RainbowNode {
             parameters,
             block: Some(RainbowBlock::new(children)),
             leading: RainbowLeadingTrivia::default(),
+            id: None,
+            style: Vec::new(),
+            events: Vec::new(),
+            slots: Vec::new(),
         }
     }
 
@@ -200,6 +234,19 @@ impl RainbowNode {
                 .iter()
                 .any(|parameter| parameter.value.has_placeholder())
             || self.children().iter().any(RainbowNode::has_placeholder)
+            || self.id.as_ref().is_some_and(|id| id.contains("#{"))
+            || self
+                .style
+                .iter()
+                .any(|parameter| parameter.value.has_placeholder())
+            || self
+                .events
+                .iter()
+                .any(|trigger| trigger.events.iter().any(RainbowNode::has_placeholder))
+            || self
+                .slots
+                .iter()
+                .any(|slot| slot.plugins.iter().any(RainbowNode::has_placeholder))
     }
 }
 
@@ -297,6 +344,8 @@ pub enum RainbowValue {
     },
     Array(Vec<RainbowValue>),
     Object(Vec<RainbowObjectEntry>),
+    /// A metadata value that is a list of plugins: `plugin: { Button() }`.
+    Plugins(Vec<RainbowNode>),
     Null,
 }
 
@@ -307,6 +356,7 @@ impl RainbowValue {
             Self::Tagged { body, .. } => body.has_placeholder(),
             Self::Array(values) => values.iter().any(Self::has_placeholder),
             Self::Object(entries) => entries.iter().any(|entry| entry.value.has_placeholder()),
+            Self::Plugins(plugins) => plugins.iter().any(RainbowNode::has_placeholder),
             _ => false,
         }
     }
