@@ -2,7 +2,7 @@
   "name": "vscode-rainbow",
   "displayName": "Rainbow DSL",
   "description": "Language support for the Rainbow SDUI DSL (VS Code + Cursor).",
-  "version": "0.1.0-beta.1",
+  "version": "1.0.0",
   "publisher": "tcc-nshiftui",
   "repository": {
     "type": "git",

@@ -49,7 +49,7 @@ pub use semantics::{
     is_upper_camel_case_name,
 };
 
-pub const RAINBOW_PARSER_VERSION: &str = "0.1.0-beta.1";
+pub const RAINBOW_PARSER_VERSION: &str = "1.0.0";
 
 #[derive(Clone, Copy, Debug, Default)]
 pub struct RainbowParser;

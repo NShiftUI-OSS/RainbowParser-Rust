@@ -22,7 +22,7 @@ registration still fatals in iOS `NShiftRegisteredVersionCatalog`.
 Current beta:
 
 ```text
-0.1.0-beta.1
+1.0.0
 ```
 
 The runtime version is exposed as:

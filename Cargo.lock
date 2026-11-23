@@ -803,7 +803,7 @@ dependencies = [
 
 [[package]]
 name = "rainbow-cli"
-version = "0.1.0-beta.1"
+version = "1.0.0"
 dependencies = [
  "rainbow-parser",
  "serde_json",
@@ -812,7 +812,7 @@ dependencies = [
 
 [[package]]
 name = "rainbow-lsp"
-version = "0.1.0-beta.1"
+version = "1.0.0"
 dependencies = [
  "rainbow-parser",
  "serde",
@@ -823,7 +823,7 @@ dependencies = [
 
 [[package]]
 name = "rainbow-parser"
-version = "0.1.0-beta.1"
+version = "1.0.0"
 dependencies = [
  "comrak",
  "html5ever",
@@ -834,7 +834,7 @@ dependencies = [
 
 [[package]]
 name = "rainbow-wasm"
-version = "0.1.0-beta.1"
+version = "1.0.0"
 dependencies = [
  "console_error_panic_hook",
  "rainbow-parser",

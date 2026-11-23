@@ -718,7 +718,7 @@ fn parser_exposes_version_and_json_response() {
     let document = decode(r#"Button(title: "Entrar")"#).expect("parse should succeed");
     let json = parse_success_to_json(&document);
 
-    assert_eq!(RAINBOW_PARSER_VERSION, "0.1.0-beta.1");
+    assert_eq!(RAINBOW_PARSER_VERSION, "1.0.0");
     assert!(json.contains(r#""ok":true"#));
     assert!(json.contains(r#""kind":"ident""#));
     assert!(json.contains(r#""value":"Button""#));
