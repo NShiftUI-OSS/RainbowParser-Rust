@@ -77,6 +77,8 @@ jobs:
         with:
           name: versioned-source
           path: .ci-version/
+          include-hidden-files: true
+          if-no-files-found: error
 
   test:
     name: test
