@@ -6,7 +6,7 @@
   "publisher": "tcc-nshiftui",
   "repository": {
     "type": "git",
-    "url": "https://gitlab.com/tcc-nshiftui/global/rainbowparser-rust.git"
+    "url": "https://github.com/NShiftUI-OSS/RainbowParser-Rust.git"
   },
   "engines": {
     "vscode": "^1.85.0"

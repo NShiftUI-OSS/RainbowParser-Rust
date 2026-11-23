@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://gitlab.com/tcc-nshiftui/global/rainbowparser-rust/-/raw/main/spec/ast.schema.json",
+  "$id": "https://raw.githubusercontent.com/NShiftUI-OSS/RainbowParser-Rust/main/spec/ast.schema.json",
   "title": "Rainbow AST",
   "type": "object",
   "required": ["uses", "nodes"],

@@ -12,5 +12,5 @@ version = "1.0.0"
 edition = "2021"
 rust-version = "1.86"
 license = "MIT"
-repository = "https://gitlab.com/tcc-nshiftui/global/rainbowparser-rust"
+repository = "https://github.com/NShiftUI-OSS/RainbowParser-Rust"
 

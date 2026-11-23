@@ -11,7 +11,7 @@ use crate::style::Style;
 
 pub const DEMO_OWNER: &str = "NShiftUI-OSS";
 pub const DEMO_REPO: &str = "NShiftUI-Demo";
-pub const DEMO_TAG: &str = "0.1.0";
+pub const DEMO_TAG: &str = "v1.0.0";
 
 const DEMO_FOLDERS: [&str; 4] = ["web", "back", "ios", "android"];
 const TAG_FILE: &str = ".rainbow-demo-tag";
@@ -286,7 +286,7 @@ mod tests {
     fn archive_url_pins_the_public_tag() {
         assert_eq!(
             demo_archive_url(),
-            "https://github.com/NShiftUI-OSS/NShiftUI-Demo/archive/refs/tags/0.1.0.tar.gz"
+            "https://github.com/NShiftUI-OSS/NShiftUI-Demo/archive/refs/tags/v1.0.0.tar.gz"
         );
     }
 

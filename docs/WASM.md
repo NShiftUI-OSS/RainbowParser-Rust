@@ -25,7 +25,7 @@ npm install https://github.com/NShiftUI-OSS/RainbowParser-Rust/releases/download
 npm install https://github.com/NShiftUI-OSS/RainbowParser-Rust/releases/download/v<tag>/rainbow-parser-wasm-web.tgz
 ```
 
-Replace `<tag>` with the SemVer you published (`v0.1.0-beta.2`). The asset names stay stable across versions.
+Replace `<tag>` with the SemVer you published (`v1.0.0`). The asset names stay stable across versions.
 
 ## Node backend
 
@@ -103,7 +103,7 @@ A copy of the component lives in `examples/react/RainbowPreview.jsx`. Leave plac
 The Release job runs `scripts/ci/release/assemble.sh`. That needs Rust 1.88 or newer, the `wasm32-unknown-unknown` target, `wasm-pack` 0.15, and Node 20.
 
 ```bash
-VERSION=0.1.0-beta.1 bash scripts/ci/release/assemble.sh
+VERSION=1.0.0 bash scripts/ci/release/assemble.sh
 ```
 
 `cargo test --workspace` covers the JSON API on the host. From `crates/rainbow-wasm`, `wasm-pack test --node` runs the parser inside Wasm under Node.

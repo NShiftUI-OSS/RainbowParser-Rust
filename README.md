@@ -19,7 +19,7 @@ registration still fatals in iOS `NShiftRegisteredVersionCatalog`.
 
 ## Version
 
-Current beta:
+Current stable release:
 
 ```text
 1.0.0
@@ -50,8 +50,8 @@ spec/              # grammar and AST JSON schema
 This crate is the **global** Rainbow syntax source of truth for backends and
 tooling. Keep it aligned with:
 
-- iOS Swift: `mobile/iOS/packages/rainbowparser`
-- (future) Android / other runtimes
+- [RainbowParser-iOS](https://github.com/NShiftUI-OSS/RainbowParser-iOS) (Swift)
+- [RainbowParser-Android](https://github.com/NShiftUI-OSS/RainbowParser-Android) (Kotlin)
 
 When syntax changes (e.g. `use Name@1.0.0`, `@`, SemVer tokens, `.enum`), update
 **this** parser + `spec/grammar.md` + `fixtures/`, then mirror the **concrete**
@@ -70,10 +70,11 @@ Rainbow source files use the **`.rbw`** extension (editor language id remains `r
 
 ## End-user install (Homebrew + editor)
 
-Private tap (SSH access to the GitLab group required):
+Install from the public Homebrew tap:
 
 ```bash
-brew tap tcc-nshiftui/tap git@gitlab.com:tcc-nshiftui/global/homebrew-tap.git
+brew tap NShiftUI-OSS/rainbowparser
+brew trust NShiftUI-OSS/rainbowparser
 brew install rainbow
 rainbow install cursor    # or: vscode | both | (interactive)
 ```
@@ -87,13 +88,7 @@ writes editor settings so Format Document works after reload:
 `"[rainbow].editor.defaultFormatter"` (`tcc-nshiftui.vscode-rainbow`).
 Use `--no-settings` to skip the settings write. Then **Developer: Reload Window**.
 
-Optional: if the VSIX is missing locally, set a GitLab token to download from the
-Package Registry:
-
-```bash
-export GITLAB_TOKEN="<read_api personal access token>"
-rainbow install cursor
-```
+The Homebrew formula bundles the VSIX. For source builds, see the [extension build instructions](editors/vscode-rainbow/README.md).
 
 ## Commands
 
@@ -113,10 +108,10 @@ cargo run -p rainbow-cli -- demo
 CLI UX: colored ✓/✗ feedback on TTY (`NO_COLOR` / `FORCE_COLOR` respected),
 `rainbow doctor` for environment checks, and step-based `rainbow install`.
 
-`rainbow demo` downloads tag `0.1.0` of
+`rainbow demo` from the current Homebrew tap or `main` downloads tag `v1.0.0` of
 [NShiftUI-OSS/NShiftUI-Demo](https://github.com/NShiftUI-OSS/NShiftUI-Demo)
 into `~/Library/Application Support/rainbow/demo` on macOS. The demonstration
-is not part of `brew install rainbow`.
+is downloaded on demand. If you built the CLI directly from the original Rust `v1.0.0` tag, download the [current Demo archive](https://github.com/NShiftUI-OSS/NShiftUI-Demo/archive/refs/tags/v1.0.0.tar.gz) directly.
 
 
 ### VS Code / Cursor extension (development)
@@ -233,13 +228,13 @@ Actions → **Release** (branch + SemVer with or without `v`). Delete: **Delete 
 
 If the SemVer input already matches `RAINBOW_PARSER_VERSION` and the tag/Release does not exist yet, bump and commit are skipped and the WASM artifacts publish at the current version. If the tag or the GitHub Release already exists, validate fails.
 
-The bump updates the workspace `version`, `RAINBOW_PARSER_VERSION`, the version assertion in `rainbow_parser_tests`, `editors/vscode-rainbow` `package.json` / `package-lock.json`, and the beta line in this README.
+The bump updates the workspace `version`, `RAINBOW_PARSER_VERSION`, the version assertion in `rainbow_parser_tests`, `editors/vscode-rainbow` `package.json` / `package-lock.json`, and the version line in this README.
 
 The YAML files in `.github/workflows/` only orchestrate. Each job's logic lives in `scripts/ci/release/` and `scripts/ci/delete-release/`. Colors and failures with context: `scripts/helpers.sh`. To reproduce a job locally:
 
 ```bash
 ALLOWED_ACTOR=ArthurPorto-PucMinas GITHUB_ACTOR=ArthurPorto-PucMinas \
-  VERSION_INPUT=0.1.0-beta.1 BRANCH_INPUT=main \
+  VERSION_INPUT=1.2.3 BRANCH_INPUT=main \
   bash scripts/ci/release/setup.sh
 ```
 

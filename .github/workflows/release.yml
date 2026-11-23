@@ -9,7 +9,7 @@ on:
         type: string
         default: main
       version:
-        description: SemVer with or without v (example 0.1.0-beta.2 or v0.1.0-beta.2)
+        description: SemVer with or without v (example 1.2.3 or v1.2.3)
         required: true
         type: string
 

@@ -3,7 +3,7 @@
 Language support for the **Rainbow** DSL in **VS Code** and **Cursor**.
 
 Uses the `rainbow-lsp` binary from this repository (`crates/rainbow-lsp`), which
-wraps `rainbow-parser` (kept in parity with the iOS Swift parser).
+wraps `rainbow-parser` (kept in parity with the Swift and Kotlin parsers).
 
 ## Features
 
@@ -56,16 +56,16 @@ activation (and when the color theme flips). They merge into
 
 ## End-user install (recommended)
 
-With Homebrew (private tap):
+With the public Homebrew tap:
 
 ```bash
-brew tap tcc-nshiftui/tap git@gitlab.com:tcc-nshiftui/global/homebrew-tap.git
+brew tap NShiftUI-OSS/rainbowparser
+brew trust NShiftUI-OSS/rainbowparser
 brew install rainbow
 rainbow install cursor    # or: vscode | both
 ```
 
-`rainbow install` uses the VSIX packed by Homebrew (`share/rainbow/`), or downloads
-from the GitLab Package Registry when `GITLAB_TOKEN` is set. It also writes
+`rainbow install` uses the VSIX packed by Homebrew (`share/rainbow/`). It also writes
 `"rainbow.lsp.path"` and `"[rainbow].editor.defaultFormatter"`
 (`tcc-nshiftui.vscode-rainbow`) so Format Document / format on save work after
 **Developer: Reload Window**.
@@ -120,11 +120,10 @@ By default the extension looks for:
 
 ## CI
 
-The GitLab pipeline job `vscode-extension` builds a universal `.vsix` on Linux
-and publishes it to the Generic Package Registry (`vscode-rainbow`).
+Homebrew packages the universal VSIX from source. The GitHub Release ships the Node and Web WASM packages.
 
 ## Parity
 
-When Rainbow syntax changes on iOS (`mobile/iOS/packages/rainbowparser`), update
+When Rainbow syntax changes in the mobile parsers, update
 `crates/rainbow-parser` in this repo first, then rebuild `rainbow-lsp`. See
 `spec/grammar.md` and shared `fixtures/`.

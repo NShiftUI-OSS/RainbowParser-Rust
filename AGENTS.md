@@ -1,6 +1,6 @@
 # RainbowParser-Rust — Agent Harness
 
-Crate Rust de sintaxe do DSL Rainbow **e** API global do backend. Versão `0.1.0-beta.1`.
+Crate Rust de sintaxe do DSL Rainbow **e** API global do backend. Versão `1.0.0`.
 
 Autoridade da gramática: `spec/grammar.md`, `spec/ast.schema.json`, `fixtures/`, `docs/PARITY.md`.
 
